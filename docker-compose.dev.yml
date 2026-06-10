@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: domar-postgres-dev
+    environment:
+      POSTGRES_USER: domar
+      POSTGRES_PASSWORD: domar
+      POSTGRES_DB: domar
+    ports:
+      - "5432:5432"
+    volumes:
+      - domar_pgdata_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U domar"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  domar_pgdata_dev:

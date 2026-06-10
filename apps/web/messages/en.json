@@ -1,0 +1,10 @@
+{
+  "common": {
+    "appName": "Domar",
+    "tagline": "Property care for holiday rentals"
+  },
+  "home": {
+    "apiStatus": "API status: {status}",
+    "apiUnreachable": "API unreachable"
+  }
+}

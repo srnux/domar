@@ -1,0 +1,21 @@
+{
+  "name": "domar",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Domar — property-care operations for holiday rentals",
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,green \"pnpm --filter @domar/api start:dev\" \"pnpm --filter @domar/web dev\"",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "db:up": "wsl -d Ubuntu docker compose -f docker-compose.dev.yml up -d",
+    "db:down": "wsl -d Ubuntu docker compose -f docker-compose.dev.yml down",
+    "seed": "pnpm --filter @domar/api seed"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

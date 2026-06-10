@@ -3,10 +3,13 @@
 import { use } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { ArrowLeft, ImageIcon } from "lucide-react";
 import { CommentThread } from "@/components/CommentThread";
 import { StatusBadge } from "@/components/StatusBadge";
+import { JobTypeIcon } from "@/components/JobTypeIcon";
 import { formatDayHeading, formatTimeRange, localDayKey } from "@/lib/dates";
 import { useJob } from "@/lib/jobs";
+import { Card, PageSpinner } from "@/components/ui";
 
 export default function OwnerJobPage({
   params,
@@ -20,27 +23,30 @@ export default function OwnerJobPage({
   const { data: job, isPending } = useJob(jobId);
 
   if (isPending || !job) {
-    return <main className="p-4 text-neutral-400">…</main>;
+    return <PageSpinner />;
   }
 
   return (
-    <main className="mx-auto flex max-w-xl flex-col gap-4 p-4">
+    <main className="mx-auto flex max-w-2xl flex-col gap-4 p-4 sm:p-6">
       <button
         onClick={() => router.back()}
-        className="self-start text-sm text-neutral-500"
+        className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-muted hover:text-fg"
       >
-        ← {t("back")}
+        <ArrowLeft size={16} aria-hidden /> {t("back")}
       </button>
 
       <div>
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium uppercase tracking-wide text-neutral-400">
+          <span className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted">
+            <JobTypeIcon type={job.type} size={14} className="text-subtle" />
             {tj(job.type)}
           </span>
           <StatusBadge status={job.status} />
         </div>
-        <h1 className="mt-1 text-2xl font-bold">{job.title}</h1>
-        <p className="text-sm text-neutral-500">
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight">
+          {job.title}
+        </h1>
+        <p className="text-sm tabular-nums text-muted">
           {formatDayHeading(localDayKey(job.scheduledStart))} ·{" "}
           {formatTimeRange(job.scheduledStart, job.scheduledEnd)}
           {job.assignedWorker
@@ -50,8 +56,11 @@ export default function OwnerJobPage({
       </div>
 
       {job.photos.length > 0 && (
-        <section className="rounded-xl border border-neutral-200 bg-white p-3">
-          <h2 className="mb-2 font-semibold">{t("photos")}</h2>
+        <Card className="p-4">
+          <h2 className="mb-3 flex items-center gap-2 font-semibold text-fg">
+            <ImageIcon size={16} className="text-subtle" aria-hidden />
+            {t("photos")}
+          </h2>
           <div className="flex flex-wrap gap-2">
             {job.photos.map((p) => (
               // eslint-disable-next-line @next/next/no-img-element
@@ -60,11 +69,11 @@ export default function OwnerJobPage({
                 src={`/api/photos/${p.id}`}
                 alt={p.caption ?? p.kind}
                 title={p.caption ?? undefined}
-                className="h-24 w-24 rounded-lg object-cover"
+                className="size-24 rounded-md border border-border object-cover"
               />
             ))}
           </div>
-        </section>
+        </Card>
       )}
 
       <CommentThread jobId={job.id} canChooseVisibility={false} />

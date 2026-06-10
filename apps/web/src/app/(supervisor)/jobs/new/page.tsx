@@ -4,10 +4,20 @@ import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { JobType } from "@domar/shared";
+import { TriangleAlert } from "lucide-react";
 import { findConflicts, workerMatchesJobType } from "@/lib/assign";
 import { useUpdateBooking } from "@/lib/bookings";
 import { formatTimeRange } from "@/lib/dates";
 import { useCreateJob, useJobs, useProperties, useWorkers } from "@/lib/jobs";
+import {
+  Button,
+  Callout,
+  Field,
+  Input,
+  PageHeader,
+  Select,
+  Textarea,
+} from "@/components/ui";
 
 function toLocalInput(iso: string, part: "date" | "time"): string {
   const d = new Date(iso);
@@ -87,20 +97,15 @@ function NewJobForm() {
     );
   }
 
-  const input =
-    "rounded-lg border border-neutral-300 px-3 py-2.5 text-base outline-none focus:border-neutral-800 bg-white";
-
   return (
     <main className="mx-auto max-w-xl p-4">
-      <h1 className="mb-4 text-2xl font-bold">{t("newJob")}</h1>
+      <PageHeader title={t("newJob")} />
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm font-medium">
-          {t("property")}
-          <select
+        <Field label={t("property")}>
+          <Select
             required
             value={propertyId}
             onChange={(e) => setPropertyId(e.target.value)}
-            className={input}
           >
             <option value="" disabled>
               {t("selectProperty")}
@@ -112,83 +117,76 @@ function NewJobForm() {
                   {p.name}
                 </option>
               ))}
-          </select>
-        </label>
+          </Select>
+        </Field>
 
-        <label className="flex flex-col gap-1 text-sm font-medium">
-          {t("type")}
-          <select
+        <Field label={t("type")}>
+          <Select
             value={type}
             onChange={(e) => setType(e.target.value as JobType)}
-            className={input}
           >
             {Object.values(JobType).map((jt) => (
               <option key={jt} value={jt}>
                 {tj(jt)}
               </option>
             ))}
-          </select>
-        </label>
+          </Select>
+        </Field>
 
-        <label className="flex flex-col gap-1 text-sm font-medium">
-          {t("title")}
-          <input
+        <Field label={t("title")}>
+          <Input
             required
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className={input}
           />
-        </label>
+        </Field>
 
-        <label className="flex flex-col gap-1 text-sm font-medium">
-          {t("description")}
-          <textarea
+        <Field label={t("description")}>
+          <Textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
-            className={input}
           />
-        </label>
+        </Field>
 
         <div className="grid grid-cols-3 gap-3">
-          <label className="flex flex-col gap-1 text-sm font-medium">
-            {t("date")}
-            <input
+          <Field label={t("date")}>
+            <Input
               type="date"
               required
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className={input}
             />
-          </label>
-          <label className="flex flex-col gap-1 text-sm font-medium">
-            {t("from")}
-            <input
+          </Field>
+          <Field label={t("from")}>
+            <Input
               type="time"
               required
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
-              className={input}
             />
-          </label>
-          <label className="flex flex-col gap-1 text-sm font-medium">
-            {t("to")}
-            <input
+          </Field>
+          <Field label={t("to")}>
+            <Input
               type="time"
               required
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
-              className={input}
             />
-          </label>
+          </Field>
         </div>
 
-        <label className="flex flex-col gap-1 text-sm font-medium">
-          {t("assignWorker")}
-          <select
+        <Field
+          label={t("assignWorker")}
+          hint={
+            workers && eligibleWorkers.length < workers.length
+              ? t("skillFiltered", { type: tj(type) })
+              : undefined
+          }
+        >
+          <Select
             value={workerId}
             onChange={(e) => setWorkerId(e.target.value)}
-            className={input}
           >
             <option value="">{t("leaveUnassigned")}</option>
             {eligibleWorkers.map((w) => (
@@ -196,42 +194,42 @@ function NewJobForm() {
                 {w.name} ({w.skills.map((s) => tj(s as never)).join(", ")})
               </option>
             ))}
-          </select>
-          {workers && eligibleWorkers.length < workers.length && (
-            <span className="text-xs text-neutral-400">
-              {t("skillFiltered", { type: tj(type) })}
-            </span>
-          )}
-        </label>
+          </Select>
+        </Field>
 
         {conflicts.length > 0 && (
-          <div className="rounded-lg bg-orange-50 p-2 text-sm text-orange-700">
-            ⚠{" "}
-            {t("conflictHint", { count: conflicts.length })}
+          <Callout
+            variant="warning"
+            icon={<TriangleAlert size={16} aria-hidden />}
+            title={t("conflictHint", { count: conflicts.length })}
+          >
             <ul className="mt-1 list-inside list-disc">
               {conflicts.map((c) => (
-                <li key={c.id}>
+                <li key={c.id} className="tabular-nums">
                   {c.title} ·{" "}
                   {formatTimeRange(c.scheduledStart, c.scheduledEnd)}
                 </li>
               ))}
             </ul>
-          </div>
+          </Callout>
         )}
 
         {createJob.isError && (
-          <p role="alert" className="text-sm text-red-600">
+          <p role="alert" className="text-sm text-st-declined">
             {createJob.error.message}
           </p>
         )}
 
-        <button
+        <Button
           type="submit"
+          variant="primary"
+          size="lg"
+          fullWidth
           disabled={createJob.isPending}
-          className="rounded-lg bg-neutral-900 py-3 font-semibold text-white disabled:opacity-50"
+          loading={createJob.isPending}
         >
           {createJob.isPending ? t("creating") : t("createJob")}
-        </button>
+        </Button>
       </form>
     </main>
   );

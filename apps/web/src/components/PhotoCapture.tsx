@@ -2,6 +2,8 @@
 
 import { useRef } from "react";
 import { useTranslations } from "next-intl";
+import { Camera, ImageIcon } from "lucide-react";
+import { Button } from "@/components/ui";
 
 /**
  * Two separate inputs: `capture` forces the camera on phones (and removes
@@ -14,7 +16,7 @@ export function PhotoCapture({
 }: {
   onPick: (file: File) => void;
   disabled?: boolean;
-  label: string;
+  label: React.ReactNode;
 }) {
   const t = useTranslations("photos");
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -28,7 +30,7 @@ export function PhotoCapture({
 
   return (
     <div className="flex items-center gap-2">
-      <span className="flex-1 text-sm font-medium">{label}</span>
+      <span className="flex-1 text-sm font-medium text-fg-soft">{label}</span>
       <input
         ref={cameraRef}
         type="file"
@@ -44,22 +46,22 @@ export function PhotoCapture({
         className="hidden"
         onChange={handle}
       />
-      <button
+      <Button
         type="button"
+        size="lg"
         disabled={disabled}
         onClick={() => cameraRef.current?.click()}
-        className="rounded-lg border border-neutral-300 px-3 py-2 text-sm font-medium disabled:opacity-50"
       >
-        📷 {t("camera")}
-      </button>
-      <button
+        <Camera size={18} aria-hidden /> {t("camera")}
+      </Button>
+      <Button
         type="button"
+        size="lg"
         disabled={disabled}
         onClick={() => libraryRef.current?.click()}
-        className="rounded-lg border border-neutral-300 px-3 py-2 text-sm font-medium disabled:opacity-50"
       >
-        🖼 {t("library")}
-      </button>
+        <ImageIcon size={18} aria-hidden /> {t("library")}
+      </Button>
     </div>
   );
 }

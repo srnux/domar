@@ -1,8 +1,10 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { BadgeCheck } from "lucide-react";
 import { JobCard } from "@/components/JobCard";
 import { useJobs } from "@/lib/jobs";
+import { EmptyState, PageHeader, PageSpinner } from "@/components/ui";
 
 export default function VerifyQueuePage() {
   const t = useTranslations("supervisor");
@@ -12,12 +14,14 @@ export default function VerifyQueuePage() {
 
   return (
     <main className="mx-auto max-w-3xl p-4">
-      <h1 className="mb-1 text-2xl font-bold">{t("verifyQueue")}</h1>
-      <p className="mb-4 text-sm text-neutral-500">{t("verifyQueueHint")}</p>
+      <PageHeader title={t("verifyQueue")} subtitle={t("verifyQueueHint")} />
 
-      {isPending && <p className="text-neutral-400">…</p>}
+      {isPending && <PageSpinner />}
       {!isPending && queue.length === 0 && (
-        <p className="py-8 text-center text-neutral-400">{t("nothingToVerify")}</p>
+        <EmptyState
+          icon={<BadgeCheck size={22} aria-hidden />}
+          title={t("nothingToVerify")}
+        />
       )}
       <div className="flex flex-col gap-3">
         {queue.map((job) => (

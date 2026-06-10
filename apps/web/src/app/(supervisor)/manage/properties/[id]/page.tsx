@@ -6,6 +6,7 @@ import type { PropertyDto } from "@domar/shared";
 import { useQuery } from "@tanstack/react-query";
 import { ApiError, api } from "@/lib/api-client";
 import { PropertyForm } from "@/components/PropertyForm";
+import { PageHeader, PageSpinner } from "@/components/ui";
 
 export default function EditPropertyPage({
   params,
@@ -20,12 +21,12 @@ export default function EditPropertyPage({
   });
 
   if (isPending || !property) {
-    return <main className="p-4 text-neutral-400">…</main>;
+    return <PageSpinner />;
   }
 
   return (
     <main className="mx-auto max-w-xl p-4">
-      <h1 className="mb-4 text-2xl font-bold">{t("edit", { name: property.name })}</h1>
+      <PageHeader title={t("edit", { name: property.name })} />
       <PropertyForm property={property} />
     </main>
   );

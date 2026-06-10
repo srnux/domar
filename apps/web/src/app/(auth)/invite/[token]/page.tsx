@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ApiError, api } from "@/lib/api-client";
+import { Button, Card, Field, Input, PageSpinner } from "@/components/ui";
+import { BrandMark } from "@/components/ui";
 
 export default function InvitePage({
   params,
@@ -33,70 +35,81 @@ export default function InvitePage({
   });
 
   if (invite.isPending) {
-    return <main className="p-6 text-neutral-400">…</main>;
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-bg">
+        <PageSpinner />
+      </main>
+    );
   }
   if (invite.isError) {
     return (
-      <main className="flex min-h-screen items-center justify-center p-6">
-        <p className="text-neutral-500">{t("invalid")}</p>
+      <main className="flex min-h-screen items-center justify-center bg-bg p-6">
+        <p className="text-muted">{t("invalid")}</p>
       </main>
     );
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-6">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          accept.mutate();
-        }}
-        className="flex w-full max-w-sm flex-col gap-4"
-      >
-        <div className="mb-2 text-center">
-          <h1 className="text-3xl font-bold">Domar</h1>
-          <p className="text-sm text-neutral-500">
-            {t("welcome", { email: invite.data.email })}
-          </p>
+    <main className="flex min-h-screen flex-col items-center justify-center bg-bg p-6">
+      <div className="w-full max-w-sm">
+        <div className="mb-6 flex flex-col items-center gap-3 text-center">
+          <BrandMark size={44} />
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight">Domar</h1>
+            <p className="mt-1 text-sm text-muted">
+              {t("welcome", { email: invite.data.email })}
+            </p>
+          </div>
         </div>
 
-        <label className="flex flex-col gap-1 text-sm font-medium">
-          {t("name")}
-          <input
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            autoComplete="name"
-            className="rounded-lg border border-neutral-300 px-3 py-2.5 text-base outline-none focus:border-neutral-800"
-          />
-        </label>
+        <Card className="p-6 shadow-sm">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              accept.mutate();
+            }}
+            className="flex flex-col gap-4"
+          >
+            <Field label={t("name")}>
+              <Input
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoComplete="name"
+              />
+            </Field>
 
-        <label className="flex flex-col gap-1 text-sm font-medium">
-          {t("password")}
-          <input
-            type="password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="new-password"
-            className="rounded-lg border border-neutral-300 px-3 py-2.5 text-base outline-none focus:border-neutral-800"
-          />
-        </label>
+            <Field label={t("password")}>
+              <Input
+                type="password"
+                required
+                minLength={8}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+              />
+            </Field>
 
-        {accept.isError && (
-          <p role="alert" className="text-sm text-red-600">
-            {accept.error.message}
-          </p>
-        )}
+            {accept.isError && (
+              <p role="alert" className="text-sm text-st-declined">
+                {accept.error.message}
+              </p>
+            )}
 
-        <button
-          type="submit"
-          disabled={accept.isPending}
-          className="mt-2 rounded-lg bg-neutral-900 py-3 font-semibold text-white disabled:opacity-50"
-        >
-          {t("createAccount")}
-        </button>
-      </form>
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              fullWidth
+              className="mt-1"
+              disabled={accept.isPending}
+              loading={accept.isPending}
+            >
+              {t("createAccount")}
+            </Button>
+          </form>
+        </Card>
+      </div>
     </main>
   );
 }

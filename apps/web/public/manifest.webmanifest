@@ -4,8 +4,8 @@
   "description": "Property care for holiday rentals",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#fafafa",
-  "theme_color": "#171717",
+  "background_color": "#fafbfc",
+  "theme_color": "#ffffff",
   "icons": [
     {
       "src": "/icon-192.png",

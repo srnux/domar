@@ -3,8 +3,10 @@
 import { useState } from "react";
 import type { JobDto, PhotoKind } from "@domar/shared";
 import { useTranslations } from "next-intl";
+import { Check, ImageIcon, TriangleAlert } from "lucide-react";
 import { useUploadPhoto } from "@/lib/photos";
 import { PhotoCapture } from "./PhotoCapture";
+import { Button, Card, Textarea } from "@/components/ui";
 
 function PhotoRow({ job, kind }: { job: JobDto; kind: PhotoKind }) {
   const photos = job.photos.filter(
@@ -20,7 +22,7 @@ function PhotoRow({ job, kind }: { job: JobDto; kind: PhotoKind }) {
           src={`/api/photos/${p.id}`}
           alt={p.caption ?? kind}
           title={p.caption ?? undefined}
-          className="h-20 w-20 rounded-lg object-cover"
+          className="size-20 rounded-md border border-border object-cover"
         />
       ))}
     </div>
@@ -41,13 +43,16 @@ export function JobPhotos({
   const [issueFile, setIssueFile] = useState<File | null>(null);
 
   return (
-    <section className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-3">
-      <h2 className="font-semibold">{t("title")}</h2>
+    <Card className="flex flex-col gap-3 p-4">
+      <h2 className="flex items-center gap-2 font-semibold text-fg">
+        <ImageIcon size={16} className="text-subtle" aria-hidden />
+        {t("title")}
+      </h2>
 
       {(["BEFORE", "AFTER", "ISSUE"] as const).map((kind) => (
-        <div key={kind} className="flex flex-col gap-1">
+        <div key={kind} className="flex flex-col gap-1.5">
           {job.photos.some((p) => p.kind === kind && !p.checklistItemId) && (
-            <span className="text-xs font-medium uppercase tracking-wide text-neutral-400">
+            <span className="text-xs font-medium uppercase tracking-wide text-muted">
               {t(kind)}
             </span>
           )}
@@ -56,7 +61,7 @@ export function JobPhotos({
       ))}
 
       {canUpload && (
-        <>
+        <div className="flex flex-col gap-3">
           <PhotoCapture
             label={t("BEFORE")}
             disabled={upload.isPending}
@@ -72,29 +77,41 @@ export function JobPhotos({
             <button
               type="button"
               onClick={() => setShowIssue(true)}
-              className="self-start text-sm font-medium text-orange-600"
+              className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-st-declined hover:underline"
             >
-              ⚠ {t("flagIssue")}
+              <TriangleAlert size={15} aria-hidden /> {t("flagIssue")}
             </button>
           ) : (
-            <div className="flex flex-col gap-2 rounded-xl border border-orange-200 bg-orange-50 p-3">
-              <label className="text-sm font-medium text-orange-800">
+            <div className="flex flex-col gap-2 rounded-md border border-st-declined/30 bg-st-declined-soft p-3">
+              <label className="text-sm font-medium text-st-declined">
                 {t("issueNote")}
               </label>
-              <textarea
+              <Textarea
                 value={issueNote}
                 onChange={(e) => setIssueNote(e.target.value)}
                 rows={2}
-                className="rounded-lg border border-neutral-300 p-2 text-sm"
+                className="text-sm"
               />
               <PhotoCapture
-                label={issueFile ? `✓ ${issueFile.name}` : t("issuePhoto")}
+                label={
+                  issueFile ? (
+                    <span className="inline-flex items-center gap-1">
+                      <Check size={14} /> {issueFile.name}
+                    </span>
+                  ) : (
+                    t("issuePhoto")
+                  )
+                }
                 disabled={upload.isPending}
                 onPick={setIssueFile}
               />
-              <button
+              <Button
                 type="button"
+                variant="warning"
+                size="lg"
+                fullWidth
                 disabled={!issueFile || !issueNote.trim() || upload.isPending}
+                loading={upload.isPending}
                 onClick={() =>
                   issueFile &&
                   upload.mutate(
@@ -108,20 +125,19 @@ export function JobPhotos({
                     },
                   )
                 }
-                className="rounded-lg bg-orange-600 py-2.5 font-semibold text-white disabled:opacity-50"
               >
                 {t("submitIssue")}
-              </button>
+              </Button>
             </div>
           )}
-        </>
+        </div>
       )}
 
       {upload.isError && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-st-declined">
           {upload.error.message}
         </p>
       )}
-    </section>
+    </Card>
   );
 }

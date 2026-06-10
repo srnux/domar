@@ -1,0 +1,140 @@
+/* ============================================================
+   Domar Design System  ·  Tailwind v4 theme
+   ============================================================
+
+   Tailwind v4 reads its theme from CSS, not JS. Drop this file
+   into your app's global stylesheet (usually app/globals.css)
+   above your @tailwind utilities OR import it from there:
+
+     @import "tailwindcss";
+     @import "./domar-tailwind.css";
+
+   After this, you get utilities like:
+     bg-bg            text-fg            border-border
+     bg-surface       text-muted         border-border-strong
+     bg-accent        text-accent-fg     ring-accent-line
+     bg-st-progress   text-st-declined   etc.
+
+   Plus the spacing / radius / font scales as Tailwind sizes.
+   ============================================================ */
+
+@theme {
+
+  /* ---- Color palette ---- */
+  --color-bg:            oklch(98.5% 0.003 240);
+  --color-surface:       oklch(100%  0     0);
+  --color-surface-2:     oklch(99%   0.003 240);
+
+  --color-fg:            oklch(16% 0.012 250);
+  --color-fg-soft:       oklch(28% 0.012 250);
+  --color-muted:         oklch(48% 0.012 250);
+  --color-subtle:        oklch(64% 0.008 250);
+
+  --color-border:        oklch(92% 0.005 250);
+  --color-border-strong: oklch(86% 0.006 250);
+
+  --color-accent:        #00BD7D;
+  --color-accent-fg:     oklch(36% 0.10  165);
+  --color-accent-soft:   oklch(96% 0.045 165);
+  --color-accent-line:   oklch(86% 0.10  165);
+
+  /* Workflow status */
+  --color-st-draft:         oklch(60% 0.005 250);
+  --color-st-draft-soft:    oklch(95% 0.003 250);
+  --color-st-assigned:      oklch(56% 0.16  255);
+  --color-st-assigned-soft: oklch(96% 0.04  255);
+  --color-st-accepted:      oklch(58% 0.12  220);
+  --color-st-accepted-soft: oklch(96% 0.03  220);
+  --color-st-progress:      oklch(63% 0.16  70);
+  --color-st-progress-soft: oklch(97% 0.05  80);
+  --color-st-declined:      oklch(58% 0.18  35);
+  --color-st-declined-soft: oklch(97% 0.04  35);
+  --color-st-done:          oklch(55% 0.17  295);
+  --color-st-done-soft:     oklch(97% 0.03  295);
+  --color-st-verified:      oklch(56% 0.16  162);
+  --color-st-verified-soft: oklch(96% 0.05  165);
+
+  --color-warn-bg:   oklch(98% 0.025 60);
+  --color-warn-line: oklch(80% 0.13  60);
+  --color-warn-fg:   oklch(40% 0.13  50);
+
+  /* ---- Typography ---- */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+
+  --text-xs:   12px;
+  --text-sm:   13px;
+  --text-base: 14px;
+  --text-md:   16px;
+  --text-lg:   20px;
+  --text-xl:   24px;
+  --text-2xl:  28px;
+  --text-3xl:  32px;
+
+  /* ---- Radii ---- */
+  --radius-sm:   6px;
+  --radius:      8px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-pill: 999px;
+
+  /* ---- Shadow ---- */
+  --shadow-sm: 0 1px  2px oklch(80% 0.01 250 / 0.30);
+  --shadow-md: 0 4px 12px oklch(20% 0.02 250 / 0.08);
+  --shadow-lg: 0 8px 32px oklch(20% 0.02 250 / 0.10);
+
+  /* ---- Motion ---- */
+  --ease-domar: cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+
+/* ------------------------------------------------------------
+   Optional: a few utility helpers the dashboard relies on.
+   These compose with Tailwind utilities.
+   ------------------------------------------------------------ */
+@utility tabular-nums-strict { font-variant-numeric: tabular-nums; }
+
+@utility dom-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px 2px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border: 1px solid;
+  line-height: 1.4;
+}
+
+@utility dom-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------
+   Example usage in your JSX:
+
+   <span className="dom-pill bg-st-progress-soft text-st-progress
+                    border-st-progress/30">
+     <span className="size-1.5 rounded-full bg-st-progress" />
+     In progress
+   </span>
+
+   <button className="bg-accent text-white px-3.5 py-2
+                      rounded-md font-medium shadow-sm
+                      hover:bg-accent/90 transition">
+     New job
+   </button>
+
+   <div className="dom-card p-4">
+     <div className="text-xs text-muted uppercase tracking-wide">
+       Today's jobs
+     </div>
+     <div className="text-2xl font-semibold tabular-nums-strict mt-1">
+       8
+     </div>
+   </div>
+   ------------------------------------------------------------ */

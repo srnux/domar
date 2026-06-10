@@ -1,9 +1,11 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { CalendarDays } from "lucide-react";
 import { JobCard } from "@/components/JobCard";
 import { formatDayHeading, groupByLocalDay, todayKey } from "@/lib/dates";
 import { useJobs } from "@/lib/jobs";
+import { EmptyState, PageHeader, PageSpinner } from "@/components/ui";
 
 export default function MyWeekPage() {
   const t = useTranslations("worker");
@@ -19,15 +21,18 @@ export default function MyWeekPage() {
   const grouped = groupByLocalDay(upcoming, (j) => j.scheduledStart);
 
   return (
-    <main className="p-4">
-      <h1 className="mb-4 text-2xl font-bold">{t("myWeek")}</h1>
-      {isPending && <p className="text-neutral-400">…</p>}
+    <main className="mx-auto max-w-2xl p-4">
+      <PageHeader title={t("myWeek")} />
+      {isPending && <PageSpinner />}
       {!isPending && grouped.size === 0 && (
-        <p className="py-8 text-center text-neutral-400">{t("noJobsAhead")}</p>
+        <EmptyState
+          icon={<CalendarDays size={22} aria-hidden />}
+          title={t("noJobsAhead")}
+        />
       )}
       {[...grouped.entries()].map(([day, dayJobs]) => (
-        <section key={day} className="mb-5">
-          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-neutral-400">
+        <section key={day} className="mb-6">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
             {day === todayKey() ? t("today") : formatDayHeading(day)}
           </h2>
           <div className="flex flex-col gap-3">

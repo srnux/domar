@@ -1,0 +1,1102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Domar — Worker app</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    /* page chrome */
+    --page-bg:      oklch(97% 0.005 220);
+    --page-fg:      oklch(20% 0.012 240);
+    --page-muted:   oklch(48% 0.012 240);
+
+    /* app surfaces */
+    --bg:           oklch(98% 0.005 220);
+    --surface:      oklch(100% 0 0);
+    --surface-2:    oklch(97.5% 0.005 220);
+    --fg:           oklch(15% 0.012 250);
+    --muted:        oklch(48% 0.012 250);
+    --subtle:       oklch(63% 0.008 250);
+    --border:       oklch(91% 0.005 250);
+
+    --accent:       #00BD7D;
+    --accent-soft:  oklch(95% 0.05 165);
+    --accent-fg:    oklch(36% 0.10 165);
+    --accent-line:  oklch(83% 0.10 165);
+
+    /* status */
+    --st-assigned:     oklch(56% 0.16 255);
+    --st-assigned-soft:oklch(96% 0.04 255);
+    --st-accepted:     oklch(58% 0.12 220);
+    --st-accepted-soft:oklch(96% 0.03 220);
+    --st-progress:     oklch(63% 0.16 70);
+    --st-progress-soft:oklch(97% 0.05 80);
+    --st-done:         oklch(55% 0.17 295);
+    --st-done-soft:    oklch(97% 0.03 295);
+
+    /* the access notes call-out — the most-read text in the field */
+    --access-bg:    oklch(96% 0.055 90);
+    --access-line:  oklch(82% 0.13 85);
+    --access-fg:    oklch(34% 0.12 80);
+    --access-keybg: oklch(40% 0.13 80);
+
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    color: var(--page-fg);
+    background:
+      radial-gradient(ellipse at top, oklch(97% 0.013 200) 0%, var(--page-bg) 60%);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+  /* ---------- PAGE CHROME ---------- */
+  .top {
+    position: sticky; top: 0; z-index: 50;
+    background: oklch(100% 0 0 / 0.7);
+    backdrop-filter: blur(14px) saturate(160%);
+    border-bottom: 1px solid var(--border);
+  }
+  .top-inner {
+    max-width: 1280px; margin: 0 auto;
+    padding: 14px 24px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 8px;
+    font-weight: 600; font-size: 15px; letter-spacing: -0.01em;
+    color: var(--fg);
+  }
+  .brand-mark {
+    width: 22px; height: 22px;
+    border-radius: 5px; background: var(--fg); color: var(--surface);
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 12px;
+    position: relative;
+  }
+  .brand-mark::after {
+    content: ''; position: absolute;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    right: -2px; bottom: -2px;
+    border: 2px solid var(--surface);
+  }
+  .top-tag {
+    font-size: 12px; color: var(--muted);
+    padding: 4px 10px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--border);
+  }
+  .spacer { flex: 1; }
+  .switch {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 14px; border-radius: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    font-size: 13px; font-weight: 500; color: var(--fg);
+    text-decoration: none;
+  }
+  .switch:hover { background: var(--surface-2); }
+  .switch svg { color: var(--muted); }
+
+  /* ---------- PAGE HEADER ---------- */
+  .page-head {
+    max-width: 1280px; margin: 0 auto;
+    padding: 40px 24px 16px;
+    display: flex; align-items: end; justify-content: space-between;
+    gap: 24px; flex-wrap: wrap;
+  }
+  .page-head h1 {
+    margin: 0; font-size: 30px; font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .page-head .sub {
+    margin-top: 6px; color: var(--page-muted); max-width: 620px; font-size: 14px;
+  }
+  .legend {
+    display: flex; align-items: center; gap: 16px;
+    color: var(--muted); font-size: 12.5px;
+  }
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* ---------- PHONE GALLERY ---------- */
+  .gallery {
+    max-width: 1280px; margin: 0 auto;
+    padding: 16px 24px 60px;
+    display: flex; gap: 28px;
+    overflow-x: auto;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  /* ---------- iPhone FRAME ---------- */
+  .phone {
+    flex: 0 0 auto;
+    width: 390px;
+    background: oklch(12% 0.01 250);
+    border-radius: 52px;
+    padding: 12px;
+    box-shadow:
+      0 0 0 1px oklch(20% 0.01 250),
+      0 30px 60px -20px oklch(20% 0.02 250 / 0.35),
+      0 8px 18px -8px oklch(20% 0.02 250 / 0.25);
+    position: relative;
+  }
+  .phone-screen {
+    width: 100%; height: 720px;
+    background: var(--bg);
+    border-radius: 42px;
+    overflow: hidden;
+    position: relative;
+    display: flex; flex-direction: column;
+  }
+  /* Dynamic Island */
+  .island {
+    position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 36px; background: oklch(8% 0.005 250);
+    border-radius: 999px; z-index: 30;
+  }
+  /* iOS status bar */
+  .status {
+    height: 54px; flex: 0 0 auto;
+    padding: 18px 28px 0;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 15px; font-weight: 600; color: var(--fg);
+    font-family: var(--font);
+  }
+  .status .time { font-variant-numeric: tabular-nums; }
+  .status-icons {
+    display: flex; align-items: center; gap: 6px;
+    color: var(--fg);
+  }
+  .status-icons svg { display: block; }
+  .home-indicator {
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    width: 134px; height: 5px; border-radius: 999px;
+    background: oklch(20% 0.005 250);
+    z-index: 30;
+  }
+  .phone-label {
+    position: absolute; bottom: -34px; left: 0; right: 0;
+    text-align: center; font-size: 12px; color: var(--page-muted);
+    font-weight: 500;
+  }
+  .phone-label .step {
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .phone-label .num {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--fg); color: var(--surface);
+    display: inline-grid; place-items: center;
+    font-size: 10.5px; font-weight: 600;
+  }
+
+  /* ---------- WORKER APP ---------- */
+  .app {
+    flex: 1; overflow-y: auto;
+    padding: 8px 18px 100px;
+    background: var(--bg);
+  }
+  .app::-webkit-scrollbar { display: none; }
+
+  /* Greeting block */
+  .greet {
+    padding: 10px 2px 14px;
+  }
+  .greet .hi { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+  .greet .date {
+    color: var(--muted); font-size: 13px;
+    margin-top: 2px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .greet .date .sep { color: var(--subtle); }
+
+  /* Today's summary card */
+  .summary {
+    background: linear-gradient(135deg, oklch(98% 0.018 165) 0%, var(--surface) 70%);
+    border: 1px solid var(--accent-line);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;
+    margin-bottom: 18px;
+    position: relative; overflow: hidden;
+  }
+  .summary::before {
+    content: ''; position: absolute; top: 0; right: -30px; width: 100px; height: 100px;
+    background: radial-gradient(circle, oklch(85% 0.12 165 / 0.3), transparent 70%);
+    pointer-events: none;
+  }
+  .summary .cell { display: flex; flex-direction: column; gap: 2px; }
+  .summary .v {
+    font-size: 24px; font-weight: 700; letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--fg);
+    line-height: 1.1;
+  }
+  .summary .v.green { color: var(--accent-fg); }
+  .summary .l {
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.04em;
+    font-weight: 500;
+  }
+
+  /* Section header */
+  .sec-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 18px 0 10px;
+  }
+  .sec-head h2 {
+    margin: 0; font-size: 12px; font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .sec-head .right {
+    font-size: 12px; color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Job card */
+  .jobcard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex; flex-direction: column; gap: 10px;
+    position: relative;
+  }
+  .jobcard.active {
+    border-color: var(--accent-line);
+    background: linear-gradient(135deg, oklch(99% 0.012 165) 0%, var(--surface) 80%);
+  }
+  .jobcard.next {
+    border-color: oklch(88% 0.05 220);
+  }
+  .jobcard.queued {
+    background: var(--surface);
+    opacity: 0.96;
+  }
+  .jobcard .type-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+  .jobcard .type-row .pip { width: 5px; height: 5px; border-radius: 50%; background: var(--subtle); }
+  .jobcard.active .type-row .pip { background: var(--accent); animation: jpulse 1.6s infinite; }
+  @keyframes jpulse { 50% { transform: scale(1.4); opacity: 0.6; } }
+  .jobcard .title {
+    font-size: 16px; font-weight: 700; letter-spacing: -0.01em;
+    line-height: 1.25;
+  }
+  .jobcard .where { font-size: 13px; color: var(--muted); }
+  .jobcard .where b { color: var(--fg); font-weight: 600; }
+  .jobcard .time-row {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px;
+    margin-top: 2px;
+  }
+  .jobcard .time-row .when {
+    font-family: var(--font-mono); font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .jobcard .time-row .dur { color: var(--muted); font-size: 12.5px; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 2px 7px 2px 6px;
+    border-radius: 999px;
+    font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    border: 1px solid;
+  }
+  .pill .pdot { width: 6px; height: 6px; border-radius: 50%; }
+  .pill.assigned   { color: var(--st-assigned); background: var(--st-assigned-soft); border-color: oklch(88% 0.06 255); }
+  .pill.assigned .pdot { background: var(--st-assigned); }
+  .pill.accepted   { color: var(--st-accepted); background: var(--st-accepted-soft); border-color: oklch(88% 0.05 220); }
+  .pill.accepted .pdot { background: var(--st-accepted); }
+  .pill.progress   { color: oklch(40% 0.13 60); background: var(--st-progress-soft); border-color: oklch(88% 0.07 70); }
+  .pill.progress .pdot { background: var(--st-progress); animation: jpulse 1.6s infinite; }
+  .pill.done       { color: var(--st-done); background: var(--st-done-soft); border-color: oklch(89% 0.06 295); }
+  .pill.done .pdot { background: var(--st-done); }
+
+  .progress-bar {
+    height: 4px; border-radius: 999px; background: var(--surface-2);
+    overflow: hidden;
+  }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 999px; }
+
+  .cta {
+    display: flex; gap: 8px; margin-top: 4px;
+  }
+  .cta button {
+    flex: 1; height: 44px;
+    border: 1px solid var(--border);
+    background: var(--surface); color: var(--fg);
+    font-weight: 600; font-size: 14px;
+    border-radius: 10px; font-family: inherit;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .cta button.primary {
+    background: var(--accent); color: white;
+    border-color: oklch(50% 0.13 165);
+    box-shadow: inset 0 1px 0 oklch(100% 0 0 / 0.25);
+  }
+  .cta button.decline {
+    color: var(--muted);
+  }
+
+  /* Bottom tab bar */
+  .tabbar {
+    flex: 0 0 auto;
+    height: 78px;
+    padding: 8px 16px 22px;
+    background: oklch(100% 0 0 / 0.85);
+    backdrop-filter: blur(14px) saturate(180%);
+    border-top: 1px solid var(--border);
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    position: relative; z-index: 20;
+  }
+  .tab {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 6px 4px; border-radius: 8px;
+    font-size: 10.5px; font-weight: 600;
+    color: var(--subtle);
+    text-decoration: none;
+    transition: color 120ms;
+  }
+  .tab.on { color: var(--accent-fg); }
+  .tab svg { width: 22px; height: 22px; }
+
+  /* --------- SCREEN 2: JOB DETAIL --------- */
+  .detail-head {
+    display: flex; align-items: center; gap: 12px;
+    padding: 2px 0 16px;
+  }
+  .back {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--border);
+    display: grid; place-items: center;
+    color: var(--fg);
+  }
+  .detail-head .crumb-text { font-size: 12px; color: var(--muted); }
+  .detail-head .crumb-title { font-size: 13px; font-weight: 600; }
+
+  .detail-hero {
+    background: linear-gradient(150deg,
+      oklch(82% 0.08 200) 0%,
+      oklch(68% 0.10 220) 50%,
+      oklch(55% 0.13 230) 100%);
+    border-radius: 16px;
+    height: 130px;
+    margin-bottom: 14px;
+    position: relative; overflow: hidden;
+    display: flex; align-items: end;
+    padding: 14px;
+  }
+  .detail-hero::before {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(180deg, transparent 30%, oklch(20% 0.05 240 / 0.45) 100%),
+      radial-gradient(circle at 20% 80%, oklch(95% 0.04 80 / 0.2), transparent 60%);
+  }
+  .detail-hero .ho {
+    position: relative; z-index: 1;
+    color: var(--surface);
+    font-size: 12px; font-weight: 500;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .detail-hero .pin {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: oklch(70% 0.18 25); border: 2px solid var(--surface);
+  }
+  .detail-hero .ho b { font-weight: 600; }
+
+  .detail-title {
+    font-size: 22px; font-weight: 700; letter-spacing: -0.01em;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+  .detail-prop { font-size: 13.5px; color: var(--muted); margin-bottom: 14px; }
+  .detail-prop b { color: var(--fg); font-weight: 600; }
+
+  .meta-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    margin-bottom: 14px;
+  }
+  .meta-cell {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .meta-cell .l { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+  .meta-cell .v { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .meta-cell .v.small { font-size: 13px; }
+
+  /* THE ACCESS NOTES BLOCK — the most-read text in the field */
+  .access {
+    background: var(--access-bg);
+    border: 1.5px solid var(--access-line);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    color: var(--access-fg);
+    position: relative;
+  }
+  .access-head {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin-bottom: 10px;
+  }
+  .access-head .key-icon {
+    width: 24px; height: 24px; border-radius: 6px;
+    background: var(--access-keybg); color: oklch(95% 0.04 80);
+    display: grid; place-items: center;
+  }
+  .access .row {
+    display: grid; grid-template-columns: 90px 1fr;
+    gap: 4px; padding: 7px 0;
+    border-top: 1px dashed var(--access-line);
+    font-size: 13.5px;
+    align-items: center;
+  }
+  .access .row:nth-of-type(1) { border-top: 0; }
+  .access .row .label { font-size: 12px; font-weight: 600; opacity: 0.85; }
+  .access .row .value { font-weight: 600; }
+  .access .row .value.code {
+    font-family: var(--font-mono); font-size: 22px;
+    font-weight: 700; letter-spacing: 0.04em;
+    color: var(--access-fg);
+    line-height: 1;
+  }
+  .access .row .value.wifi {
+    font-family: var(--font-mono); font-size: 13px;
+    font-weight: 600;
+  }
+
+  /* Section heads in detail */
+  .block-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 18px 0 8px;
+  }
+  .block-head h3 {
+    margin: 0; font-size: 13px; font-weight: 700;
+    letter-spacing: -0.005em;
+  }
+  .block-head .count {
+    font-size: 12px; color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Checklist preview */
+  .checklist-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px;
+  }
+  .checklist-progress {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 13px; font-weight: 600;
+  }
+  .checklist-progress .num { color: var(--accent-fg); font-variant-numeric: tabular-nums; }
+  .check-item {
+    display: flex; gap: 10px; align-items: center;
+    padding: 8px 0; border-top: 1px dashed var(--border);
+    font-size: 13.5px;
+  }
+  .check-item:first-of-type { border-top: 0; }
+  .checkbox {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--surface); border: 1.5px solid var(--border);
+    flex-shrink: 0;
+    display: grid; place-items: center;
+  }
+  .checkbox.checked {
+    background: var(--accent); border-color: var(--accent);
+    color: white;
+  }
+  .checkbox.checked svg { display: block; }
+  .checkbox svg { display: none; }
+  .check-item.done .text { color: var(--subtle); text-decoration: line-through; }
+  .check-item .text { flex: 1; }
+  .check-item .photo-req {
+    font-size: 10.5px; padding: 2px 6px; border-radius: 4px;
+    background: var(--access-bg); color: var(--access-fg);
+    border: 1px solid var(--access-line);
+    font-weight: 600;
+  }
+
+  /* Photo capture preview */
+  .photo-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .photo-slot {
+    aspect-ratio: 1;
+    border-radius: 10px; background: var(--surface-2);
+    border: 1px dashed var(--border);
+    display: grid; place-items: center;
+    color: var(--subtle);
+    position: relative;
+    overflow: hidden;
+  }
+  .photo-slot.filled {
+    border: 1px solid var(--border);
+    background: linear-gradient(135deg, oklch(82% 0.04 200), oklch(70% 0.05 220));
+  }
+  .photo-slot.filled:nth-child(2) { background: linear-gradient(135deg, oklch(80% 0.05 80), oklch(72% 0.07 60)); }
+  .photo-slot.filled:nth-child(3) { background: linear-gradient(135deg, oklch(80% 0.05 165), oklch(70% 0.09 175)); }
+  .photo-slot.add {
+    background: var(--surface); border: 1.5px dashed var(--access-line);
+    color: var(--access-fg);
+  }
+  .photo-slot .check {
+    position: absolute; top: 5px; right: 5px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--accent); color: white;
+    display: grid; place-items: center;
+    font-size: 11px; font-weight: 700;
+    border: 2px solid var(--surface);
+  }
+
+  /* Sticky bottom CTA */
+  .sticky-cta {
+    position: absolute; bottom: 78px; left: 0; right: 0;
+    padding: 12px 18px;
+    background: linear-gradient(to top, var(--bg) 60%, transparent);
+    z-index: 15;
+    border-top: 0;
+  }
+  .big-cta {
+    width: 100%; height: 52px;
+    background: var(--accent); color: white;
+    font-family: inherit; font-weight: 700; font-size: 15px;
+    border: 1px solid oklch(50% 0.13 165);
+    border-radius: 14px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    cursor: pointer;
+    box-shadow:
+      inset 0 1px 0 oklch(100% 0 0 / 0.22),
+      0 8px 22px -8px oklch(45% 0.13 165 / 0.55);
+  }
+  .big-cta.alt {
+    background: var(--surface); color: var(--fg);
+    border-color: var(--border);
+    box-shadow: none;
+  }
+
+  /* Issue flag inline */
+  .issue {
+    background: var(--st-done-soft); border: 1px solid oklch(88% 0.06 35);
+    color: oklch(40% 0.16 35);
+    border-radius: 10px; padding: 10px 12px;
+    font-size: 12.5px;
+    display: flex; align-items: start; gap: 8px;
+  }
+
+  /* ---------- SHARED PHOTO STACKS ---------- */
+  .ph-photos { display: flex; gap: 8px; }
+  .ph-photos .ph {
+    flex: 1; aspect-ratio: 1;
+    border-radius: 10px;
+    background: linear-gradient(135deg, oklch(82% 0.04 200), oklch(70% 0.05 220));
+    position: relative; overflow: hidden;
+  }
+  .ph-photos .ph:nth-child(2) { background: linear-gradient(135deg, oklch(80% 0.05 80), oklch(72% 0.07 60)); }
+  .ph-photos .ph:nth-child(3) { background: linear-gradient(135deg, oklch(78% 0.06 165), oklch(68% 0.10 175)); }
+  .ph-photos .ph-tag {
+    position: absolute; bottom: 5px; left: 5px;
+    background: oklch(20% 0.02 250 / 0.75); color: var(--surface);
+    font-size: 10px; font-weight: 600;
+    padding: 1px 6px; border-radius: 4px;
+    backdrop-filter: blur(6px);
+  }
+
+  /* finish strip */
+  .finish-strip {
+    background: var(--access-bg); border: 1px solid var(--access-line);
+    border-radius: 12px; padding: 12px 14px;
+    margin-bottom: 12px;
+    display: flex; gap: 12px; align-items: center;
+  }
+  .finish-strip .grade {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: var(--access-keybg); color: oklch(95% 0.04 80);
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+  .finish-strip .grade.complete { background: var(--accent); }
+  .finish-strip .text { font-size: 12.5px; color: var(--access-fg); line-height: 1.4; }
+  .finish-strip .text b { font-weight: 700; }
+
+  @media (max-width: 1280px) {
+    .gallery { padding-left: 16px; padding-right: 16px; gap: 22px; justify-content: flex-start; }
+  }
+  @media (max-width: 720px) {
+    .gallery {
+      flex-direction: column; align-items: center;
+      padding-bottom: 80px;
+    }
+    .phone-label { position: static; margin-top: 12px; }
+    .phone { margin-bottom: 28px; }
+    .page-head { padding: 24px 16px 12px; }
+    .top-tag { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== TOP NAV ========== -->
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">D</span>
+      <span>Domar</span>
+    </a>
+    <span class="top-tag">Worker app · installable PWA</span>
+    <div class="spacer"></div>
+    <a class="switch" href="index.html">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18 3 12l6-6"/><path d="M3 12h18"/></svg>
+      Back to supervisor dashboard
+    </a>
+  </div>
+</header>
+
+<section class="page-head">
+  <div>
+    <h1>What the worker sees</h1>
+    <p class="sub">
+      Marko's morning, Wednesday 10 June. Three screens, one journey — from the day overview to the active checklist, all on a phone, with gloves on, in the Adriatic sun.
+    </p>
+  </div>
+  <div class="legend">
+    <span class="legend-item"><span class="legend-dot" style="background: var(--st-progress);"></span>In progress</span>
+    <span class="legend-item"><span class="legend-dot" style="background: var(--st-accepted);"></span>Accepted</span>
+    <span class="legend-item"><span class="legend-dot" style="background: var(--st-assigned);"></span>Assigned</span>
+    <span class="legend-item"><span class="legend-dot" style="background: var(--st-done);"></span>Done</span>
+  </div>
+</section>
+
+<section class="gallery">
+
+  <!-- ====================== SCREEN 1 — MY DAY ====================== -->
+  <div class="phone">
+    <div class="phone-screen">
+      <div class="island"></div>
+
+      <div class="status">
+        <span class="time">11:35</span>
+        <div class="status-icons">
+          <!-- signal -->
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="0.5"/><rect x="4.5" y="5" width="3" height="6" rx="0.5"/><rect x="9" y="3" width="3" height="8" rx="0.5"/><rect x="13.5" y="0" width="3" height="11" rx="0.5"/></svg>
+          <!-- wifi -->
+          <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M1.5 4a8 8 0 0 1 12 0M3.5 6.5a5 5 0 0 1 8 0M5.5 9a2 2 0 0 1 4 0"/></svg>
+          <!-- battery -->
+          <svg width="25" height="11" viewBox="0 0 25 11" fill="none"><rect x="0.5" y="0.5" width="22" height="10" rx="2.5" stroke="currentColor" opacity="0.4"/><rect x="2.5" y="2.5" width="16" height="6" rx="1" fill="currentColor"/><rect x="23" y="3.5" width="1.5" height="4" rx="0.5" fill="currentColor" opacity="0.4"/></svg>
+        </div>
+      </div>
+
+      <div class="app">
+
+        <div class="greet">
+          <div class="hi">Dobro jutro, Marko 👋</div>
+          <div class="date">
+            <span>Wednesday, 10 June</span>
+            <span class="sep">·</span>
+            <span>maestral 12 kt</span>
+          </div>
+        </div>
+
+        <div class="summary">
+          <div class="cell">
+            <span class="v">3</span>
+            <span class="l">Jobs today</span>
+          </div>
+          <div class="cell">
+            <span class="v green">1</span>
+            <span class="l">Done</span>
+          </div>
+          <div class="cell">
+            <span class="v mono">4<span style="font-size:14px; color:var(--subtle);">h</span>30</span>
+            <span class="l">Logged</span>
+          </div>
+        </div>
+
+        <!-- Active job -->
+        <div class="sec-head">
+          <h2>Right now</h2>
+          <span class="right mono">started 09:32</span>
+        </div>
+
+        <div class="jobcard active">
+          <div class="type-row">
+            <span class="pip"></span>
+            <span>Turnover cleaning</span>
+            <span style="margin-left:auto;"><span class="pill progress"><span class="pdot"></span>In progress</span></span>
+          </div>
+          <div class="title">Poluotok 12 — Old Town apt</div>
+          <div class="where"><b>Šetalište kneza Branimira 12</b> · Klaus Brenner</div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 67%;"></div></div>
+          <div class="time-row" style="justify-content: space-between;">
+            <span><span class="when">09:00 – 11:00</span> <span class="dur">· 2h slot</span></span>
+            <span style="color:var(--accent-fg); font-weight: 600;">8 / 12 items</span>
+          </div>
+          <div class="cta">
+            <button class="primary">Continue checklist</button>
+          </div>
+        </div>
+
+        <!-- Up next -->
+        <div class="sec-head">
+          <h2>Up next</h2>
+          <span class="right">2 jobs · ends 18:00</span>
+        </div>
+
+        <div class="jobcard next">
+          <div class="type-row">
+            <span class="pip"></span>
+            <span>Turnover cleaning</span>
+            <span style="margin-left:auto;"><span class="pill accepted"><span class="pdot"></span>Accepted</span></span>
+          </div>
+          <div class="title">Diklo 7 — Seaside Villa</div>
+          <div class="where">Obala kralja Tomislava 7 · <b>3 km</b> · Lena Hartmann</div>
+          <div class="time-row">
+            <span class="when">13:00 – 15:30</span>
+            <span class="dur">· 2h 30m</span>
+          </div>
+        </div>
+
+        <div class="jobcard queued">
+          <div class="type-row">
+            <span class="pip"></span>
+            <span>Inspection</span>
+            <span style="margin-left:auto;"><span class="pill assigned"><span class="pdot"></span>Assigned</span></span>
+          </div>
+          <div class="title">Kolovare 3 — Beachfront Villa</div>
+          <div class="where">Liburnska obala 3 · <b>5 km</b> · Klaus Brenner</div>
+          <div class="time-row" style="justify-content: space-between;">
+            <span><span class="when">16:00 – 18:00</span> <span class="dur">· 2h</span></span>
+            <span style="font-size: 12px; color: var(--muted);">tap to accept</span>
+          </div>
+        </div>
+
+        <!-- Done today -->
+        <div class="sec-head">
+          <h2>Done today</h2>
+          <span class="right">1 job</span>
+        </div>
+
+        <div class="jobcard" style="opacity: 0.78;">
+          <div class="type-row">
+            <span class="pip"></span>
+            <span>Quick inspection</span>
+            <span style="margin-left:auto;"><span class="pill done"><span class="pdot"></span>Awaiting verify</span></span>
+          </div>
+          <div class="title" style="font-size:15px;">Borik 22 — checked windows</div>
+          <div class="time-row">
+            <span class="when">08:00 – 08:45</span>
+            <span class="dur">· 6 photos</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom tab bar -->
+      <div class="tabbar">
+        <a class="tab on" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          My day
+        </a>
+        <a class="tab" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          My week
+        </a>
+        <a class="tab" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+          Profile
+        </a>
+      </div>
+
+      <div class="home-indicator"></div>
+    </div>
+    <div class="phone-label">
+      <span class="step"><span class="num">1</span> My day — at a glance</span>
+    </div>
+  </div>
+
+  <!-- ====================== SCREEN 2 — JOB DETAIL ====================== -->
+  <div class="phone">
+    <div class="phone-screen">
+      <div class="island"></div>
+
+      <div class="status">
+        <span class="time">11:36</span>
+        <div class="status-icons">
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="0.5"/><rect x="4.5" y="5" width="3" height="6" rx="0.5"/><rect x="9" y="3" width="3" height="8" rx="0.5"/><rect x="13.5" y="0" width="3" height="11" rx="0.5"/></svg>
+          <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M1.5 4a8 8 0 0 1 12 0M3.5 6.5a5 5 0 0 1 8 0M5.5 9a2 2 0 0 1 4 0"/></svg>
+          <svg width="25" height="11" viewBox="0 0 25 11" fill="none"><rect x="0.5" y="0.5" width="22" height="10" rx="2.5" stroke="currentColor" opacity="0.4"/><rect x="2.5" y="2.5" width="16" height="6" rx="1" fill="currentColor"/><rect x="23" y="3.5" width="1.5" height="4" rx="0.5" fill="currentColor" opacity="0.4"/></svg>
+        </div>
+      </div>
+
+      <div class="app">
+
+        <div class="detail-head">
+          <a class="back" href="#">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m15 18-6-6 6-6"/></svg>
+          </a>
+          <div>
+            <div class="crumb-text">My day · 13:00 – 15:30</div>
+            <div class="crumb-title">Job detail</div>
+          </div>
+          <div style="margin-left:auto"><span class="pill accepted"><span class="pdot"></span>Accepted</span></div>
+        </div>
+
+        <!-- Hero map -->
+        <div class="detail-hero">
+          <div class="ho">
+            <span class="pin"></span>
+            <span><b>Obala kralja Tomislava 7</b> · Diklo, 23000 Zadar</span>
+          </div>
+        </div>
+
+        <div class="detail-title">Turnover cleaning</div>
+        <div class="detail-prop"><b>Diklo 7 — Seaside Villa</b> · 3-bedroom · Lena Hartmann</div>
+
+        <div class="meta-row">
+          <div class="meta-cell">
+            <span class="l">When</span>
+            <span class="v mono">13:00 – 15:30</span>
+            <span class="l" style="text-transform:none; letter-spacing:0; margin-top: 1px; opacity:.85;">2h 30m slot</span>
+          </div>
+          <div class="meta-cell">
+            <span class="l">Distance</span>
+            <span class="v">3 km · 8 min</span>
+            <span class="l" style="text-transform:none; letter-spacing:0; margin-top: 1px; opacity:.85;">Open in Maps</span>
+          </div>
+        </div>
+
+        <!-- THE ACCESS NOTES BLOCK — most read text in the field -->
+        <div class="access">
+          <div class="access-head">
+            <span class="key-icon">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="15" cy="9" r="5"/><path d="m4 20 6.5-6.5"/><path d="m9 15 2 2"/></svg>
+            </span>
+            Access notes
+          </div>
+          <div class="row">
+            <span class="label">Key-box</span>
+            <span class="value code">7234</span>
+          </div>
+          <div class="row">
+            <span class="label">Box location</span>
+            <span class="value" style="font-size:13px;">Front door, right wall, behind ivy</span>
+          </div>
+          <div class="row">
+            <span class="label">Parking</span>
+            <span class="value" style="font-size:13px;">Street, blue zone — free Sat/Sun</span>
+          </div>
+          <div class="row">
+            <span class="label">Wi-Fi</span>
+            <span class="value wifi">Adriatic_Diklo / nautilus2024</span>
+          </div>
+          <div class="row">
+            <span class="label">Notes</span>
+            <span class="value" style="font-size:12.5px; line-height:1.4; font-weight:500;">Dog Luna is friendly, may be in garden. Owners speak DE only.</span>
+          </div>
+        </div>
+
+        <!-- Checklist preview -->
+        <div class="block-head">
+          <h3>Checklist</h3>
+          <span class="count">12 items · 2 need photos</span>
+        </div>
+        <div class="checklist-card">
+          <div class="check-item">
+            <div class="checkbox"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="text">Strip beds and wash linen</span>
+          </div>
+          <div class="check-item">
+            <div class="checkbox"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="text">Clean kitchen incl. fridge</span>
+            <span class="photo-req">📷 photo</span>
+          </div>
+          <div class="check-item">
+            <div class="checkbox"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="text">Mop floors, vacuum rugs</span>
+          </div>
+          <div class="check-item">
+            <div class="checkbox"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="text">Bathrooms — descale + restock</span>
+            <span class="photo-req">📷 photo</span>
+          </div>
+          <div style="text-align: center; font-size: 12px; color: var(--muted); padding-top: 8px; border-top: 1px dashed var(--border); margin-top: 4px;">+ 8 more</div>
+        </div>
+
+      </div>
+
+      <!-- Sticky CTA -->
+      <div class="sticky-cta">
+        <button class="big-cta">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+          Start job
+        </button>
+      </div>
+
+      <div class="tabbar">
+        <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>My day</a>
+        <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>My week</a>
+        <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profile</a>
+      </div>
+
+      <div class="home-indicator"></div>
+    </div>
+    <div class="phone-label">
+      <span class="step"><span class="num">2</span> Job detail — access notes front-and-centre</span>
+    </div>
+  </div>
+
+  <!-- ====================== SCREEN 3 — ACTIVE / CHECKLIST + PHOTOS ====================== -->
+  <div class="phone">
+    <div class="phone-screen">
+      <div class="island"></div>
+
+      <div class="status">
+        <span class="time">10:18</span>
+        <div class="status-icons">
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="0.5"/><rect x="4.5" y="5" width="3" height="6" rx="0.5"/><rect x="9" y="3" width="3" height="8" rx="0.5"/><rect x="13.5" y="0" width="3" height="11" rx="0.5"/></svg>
+          <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M1.5 4a8 8 0 0 1 12 0M3.5 6.5a5 5 0 0 1 8 0M5.5 9a2 2 0 0 1 4 0"/></svg>
+          <svg width="25" height="11" viewBox="0 0 25 11" fill="none"><rect x="0.5" y="0.5" width="22" height="10" rx="2.5" stroke="currentColor" opacity="0.4"/><rect x="2.5" y="2.5" width="16" height="6" rx="1" fill="currentColor"/><rect x="23" y="3.5" width="1.5" height="4" rx="0.5" fill="currentColor" opacity="0.4"/></svg>
+        </div>
+      </div>
+
+      <div class="app">
+
+        <div class="detail-head">
+          <a class="back" href="#">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m15 18-6-6 6-6"/></svg>
+          </a>
+          <div>
+            <div class="crumb-text">Poluotok 12 · 67% complete</div>
+            <div class="crumb-title">Cleaning in progress</div>
+          </div>
+          <div style="margin-left:auto"><span class="pill progress"><span class="pdot"></span>Live</span></div>
+        </div>
+
+        <!-- Progress strip -->
+        <div class="finish-strip">
+          <div class="grade">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="text">
+            <b>8 of 12 checked</b> · 2 photos remaining to finish<br/>
+            <span style="opacity:.75;">~ 40 min to go</span>
+          </div>
+        </div>
+
+        <!-- Checklist -->
+        <div class="block-head">
+          <h3>Checklist</h3>
+          <span class="count">8 / 12</span>
+        </div>
+        <div class="checklist-card">
+
+          <div class="check-item done">
+            <div class="checkbox checked"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="text">Strip beds and wash linen</span>
+          </div>
+
+          <div class="check-item done">
+            <div class="checkbox checked"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="text">Clean kitchen incl. fridge</span>
+            <span class="photo-req" style="background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-fg);">✓ photo</span>
+          </div>
+
+          <div class="check-item done">
+            <div class="checkbox checked"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="text">Mop floors, vacuum rugs</span>
+          </div>
+
+          <div class="check-item">
+            <div class="checkbox"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="text"><b style="font-weight:600;">Bathrooms — descale + restock</b></span>
+            <span class="photo-req">📷 needed</span>
+          </div>
+
+          <div class="check-item">
+            <div class="checkbox"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <span class="text">Restock welcome basket</span>
+          </div>
+
+          <div style="text-align: center; font-size: 12px; color: var(--muted); padding-top: 8px; border-top: 1px dashed var(--border); margin-top: 4px;">+ 3 more</div>
+        </div>
+
+        <!-- Issue flag -->
+        <div class="block-head">
+          <h3 style="color: oklch(40% 0.16 35);">Issue flagged · 1</h3>
+          <a href="#" style="font-size:12px; color: var(--muted);">View</a>
+        </div>
+        <div class="issue">
+          <span style="font-size:14px;">⚠</span>
+          <span>Living room A/C unit drips water — sent photo to supervisor. <b>Not blocking</b> finish.</span>
+        </div>
+
+        <!-- Photos -->
+        <div class="block-head">
+          <h3>Photos</h3>
+          <span class="count">5 of 6 captured</span>
+        </div>
+        <div style="margin-bottom: 8px;">
+          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight:600; margin-bottom: 6px;">Before · kitchen</div>
+          <div class="photo-grid">
+            <div class="photo-slot filled"><div class="check">✓</div></div>
+            <div class="photo-slot filled"><div class="check">✓</div></div>
+            <div class="photo-slot filled"><div class="check">✓</div></div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight:600; margin-bottom: 6px;">After · bathroom <span style="color: var(--access-fg);">— required</span></div>
+          <div class="photo-grid">
+            <div class="photo-slot filled"><div class="check">✓</div></div>
+            <div class="photo-slot filled"><div class="check">✓</div></div>
+            <div class="photo-slot add">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3.5"/></svg>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="sticky-cta">
+        <button class="big-cta alt">
+          Finish job
+          <span style="color:var(--muted); font-weight:500;">· 1 photo + 4 items to go</span>
+        </button>
+      </div>
+
+      <div class="tabbar">
+        <a class="tab on" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>My day</a>
+        <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>My week</a>
+        <a class="tab" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profile</a>
+      </div>
+
+      <div class="home-indicator"></div>
+    </div>
+    <div class="phone-label">
+      <span class="step"><span class="num">3</span> Job in progress — checklist + photos</span>
+    </div>
+  </div>
+
+</section>
+
+</body>
+</html>

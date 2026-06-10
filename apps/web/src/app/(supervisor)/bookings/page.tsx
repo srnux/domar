@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { ArrowRight, Plus, Sparkles, TriangleAlert } from "lucide-react";
 import { formatDayHeading, formatTimeRange, localDayKey } from "@/lib/dates";
 import {
   useBookings,
@@ -10,6 +11,17 @@ import {
   useDeleteBooking,
 } from "@/lib/bookings";
 import { useProperties } from "@/lib/jobs";
+import {
+  Button,
+  buttonClass,
+  Card,
+  EmptyState,
+  Field,
+  Input,
+  PageHeader,
+  PageSpinner,
+  Select,
+} from "@/components/ui";
 
 export default function BookingsPage() {
   const t = useTranslations("bookings");
@@ -42,9 +54,6 @@ export default function BookingsPage() {
     );
   }
 
-  const input =
-    "rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-base outline-none focus:border-neutral-800";
-
   const turnoverHref = (b: NonNullable<typeof bookings>[number]) => {
     if (!b.suggestion) return "#";
     const params = new URLSearchParams({
@@ -60,131 +69,144 @@ export default function BookingsPage() {
 
   return (
     <main className="mx-auto max-w-3xl p-4">
-      <h1 className="mb-4 text-2xl font-bold">{t("title")}</h1>
+      <PageHeader title={t("title")} />
 
-      <form
-        onSubmit={submit}
-        className="mb-6 flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-3"
-      >
-        <h2 className="font-semibold">{t("add")}</h2>
-        <select
-          required
-          value={propertyId}
-          onChange={(e) => setPropertyId(e.target.value)}
-          className={input}
-        >
-          <option value="" disabled>
-            {t("selectProperty")}
-          </option>
-          {(properties ?? [])
-            .filter((p) => p.isActive)
-            .map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-        </select>
-        <div className="grid grid-cols-2 gap-3">
-          <label className="flex flex-col gap-1 text-sm font-medium">
-            {t("checkout")}
-            <input
-              type="datetime-local"
-              required
-              value={checkoutAt}
-              onChange={(e) => setCheckoutAt(e.target.value)}
-              className={input}
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm font-medium">
-            {t("nextCheckin")}
-            <input
-              type="datetime-local"
-              value={checkinAt}
-              onChange={(e) => setCheckinAt(e.target.value)}
-              className={input}
-            />
-          </label>
-        </div>
-        <input
-          value={guestNote}
-          onChange={(e) => setGuestNote(e.target.value)}
-          placeholder={t("guestNote")}
-          className={input}
-        />
-        {createBooking.isError && (
-          <p role="alert" className="text-sm text-red-600">
-            {createBooking.error.message}
-          </p>
-        )}
-        <button
-          type="submit"
-          disabled={createBooking.isPending}
-          className="rounded-lg bg-neutral-900 py-2.5 font-semibold text-white disabled:opacity-50"
-        >
-          {t("addBooking")}
-        </button>
-      </form>
+      <Card className="mb-6 p-4">
+        <form onSubmit={submit} className="flex flex-col gap-3">
+          <h2 className="font-semibold text-fg">{t("add")}</h2>
+          <Select
+            required
+            value={propertyId}
+            onChange={(e) => setPropertyId(e.target.value)}
+          >
+            <option value="" disabled>
+              {t("selectProperty")}
+            </option>
+            {(properties ?? [])
+              .filter((p) => p.isActive)
+              .map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+          </Select>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t("checkout")}>
+              <Input
+                type="datetime-local"
+                required
+                value={checkoutAt}
+                onChange={(e) => setCheckoutAt(e.target.value)}
+              />
+            </Field>
+            <Field label={t("nextCheckin")}>
+              <Input
+                type="datetime-local"
+                value={checkinAt}
+                onChange={(e) => setCheckinAt(e.target.value)}
+              />
+            </Field>
+          </div>
+          <Input
+            value={guestNote}
+            onChange={(e) => setGuestNote(e.target.value)}
+            placeholder={t("guestNote")}
+          />
+          {createBooking.isError && (
+            <p role="alert" className="text-sm text-st-declined">
+              {createBooking.error.message}
+            </p>
+          )}
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            fullWidth
+            disabled={createBooking.isPending}
+            loading={createBooking.isPending}
+          >
+            <Plus size={16} aria-hidden /> {t("addBooking")}
+          </Button>
+        </form>
+      </Card>
 
-      {isPending && <p className="text-neutral-400">…</p>}
+      {isPending && <PageSpinner />}
       {!isPending && bookings?.length === 0 && (
-        <p className="py-8 text-center text-neutral-400">{t("empty")}</p>
+        <EmptyState
+          icon={<ArrowRight size={22} aria-hidden />}
+          title={t("empty")}
+        />
       )}
       <div className="flex flex-col gap-3">
-        {bookings?.map((b) => (
-          <div
-            key={b.id}
-            className="rounded-xl border border-neutral-200 bg-white p-3"
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold">{b.property.name}</h3>
-              <button
-                onClick={() => deleteBooking.mutate(b.id)}
-                className="text-xs text-neutral-400 underline"
-              >
-                {t("remove")}
-              </button>
-            </div>
-            <p className="text-sm text-neutral-600">
-              {t("checkoutLine", {
-                day: formatDayHeading(localDayKey(b.checkoutAt)),
-              })}
-              {b.checkinAt &&
-                ` · ${t("checkinLine", { day: formatDayHeading(localDayKey(b.checkinAt)) })}`}
-            </p>
-            {b.guestNote && (
-              <p className="text-sm text-neutral-400">{b.guestNote}</p>
-            )}
-
-            {b.suggestion && (
-              <div
-                className={`mt-2 flex items-center justify-between gap-2 rounded-lg p-2 text-sm ${
-                  b.suggestion.tightGap ? "bg-orange-50" : "bg-blue-50"
-                }`}
-              >
-                <span>
-                  {b.suggestion.tightGap && "⚠ "}
-                  {t("suggested", {
-                    range: formatTimeRange(b.suggestion.start, b.suggestion.end),
-                  })}
-                </span>
-                <Link
-                  href={turnoverHref(b)}
-                  className="shrink-0 rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-semibold text-white"
+        {bookings?.map((b) => {
+          const tight = b.suggestion?.tightGap;
+          return (
+            <Card
+              key={b.id}
+              className={`p-4 ${
+                tight ? "border-l-[3px] border-l-warn-line" : ""
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="font-semibold text-fg">{b.property.name}</h3>
+                <button
+                  onClick={() => deleteBooking.mutate(b.id)}
+                  className="text-xs font-medium text-subtle hover:text-st-declined hover:underline"
                 >
-                  {t("createTurnover")}
-                </Link>
+                  {t("remove")}
+                </button>
               </div>
-            )}
-            {b.turnoverJobId && (
-              <Link
-                href={`/jobs/${b.turnoverJobId}`}
-                className="mt-2 inline-block text-sm font-medium text-blue-600"
-              >
-                {t("viewTurnover")} →
-              </Link>
-            )}
-          </div>
-        ))}
+              <p className="text-sm text-fg-soft">
+                {t("checkoutLine", {
+                  day: formatDayHeading(localDayKey(b.checkoutAt)),
+                })}
+                {b.checkinAt &&
+                  ` · ${t("checkinLine", { day: formatDayHeading(localDayKey(b.checkinAt)) })}`}
+              </p>
+              {b.guestNote && (
+                <p className="text-sm text-muted">{b.guestNote}</p>
+              )}
+
+              {b.suggestion && (
+                <div
+                  className={`mt-3 flex items-center justify-between gap-2 rounded-md border p-2.5 text-sm ${
+                    tight
+                      ? "border-warn-line/60 bg-warn-bg text-warn-fg"
+                      : "border-info-line bg-info-soft text-info-fg"
+                  }`}
+                >
+                  <span className="flex items-center gap-2 font-medium">
+                    {tight ? (
+                      <TriangleAlert size={16} aria-hidden className="shrink-0" />
+                    ) : (
+                      <Sparkles size={16} aria-hidden className="shrink-0" />
+                    )}
+                    {t("suggested", {
+                      range: formatTimeRange(
+                        b.suggestion.start,
+                        b.suggestion.end,
+                      ),
+                    })}
+                  </span>
+                  <Link
+                    href={turnoverHref(b)}
+                    className={buttonClass({ variant: "primary", size: "sm" })}
+                  >
+                    {t("createTurnover")}
+                  </Link>
+                </div>
+              )}
+              {b.turnoverJobId && (
+                <Link
+                  href={`/jobs/${b.turnoverJobId}`}
+                  className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-accent-fg hover:underline"
+                >
+                  {t("viewTurnover")} <ArrowRight size={14} aria-hidden />
+                </Link>
+              )}
+            </Card>
+          );
+        })}
       </div>
     </main>
   );

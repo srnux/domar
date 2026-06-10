@@ -6,10 +6,13 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type { PropertyDto } from "@domar/shared";
 import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, ChevronRight, ClipboardList } from "lucide-react";
 import { ApiError, api } from "@/lib/api-client";
 import { StatusBadge } from "@/components/StatusBadge";
+import { JobTypeIcon } from "@/components/JobTypeIcon";
 import { formatDayHeading, localDayKey } from "@/lib/dates";
 import { useJobs } from "@/lib/jobs";
+import { Card, EmptyState, PageSpinner } from "@/components/ui";
 
 export default function OwnerPropertyPage({
   params,
@@ -30,40 +33,57 @@ export default function OwnerPropertyPage({
     .sort((a, b) => (a.scheduledStart < b.scheduledStart ? 1 : -1));
 
   return (
-    <main className="mx-auto max-w-xl p-4">
+    <main className="mx-auto max-w-2xl p-4 sm:p-6">
       <button
         onClick={() => router.back()}
-        className="mb-2 text-sm text-neutral-500"
+        className="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-fg"
       >
-        ← {t("back")}
+        <ArrowLeft size={16} aria-hidden /> {t("back")}
       </button>
-      <h1 className="text-2xl font-bold">{property?.name ?? "…"}</h1>
-      <p className="mb-4 text-sm text-neutral-500">{property?.address}</p>
+      <h1 className="text-2xl font-semibold tracking-tight">
+        {property?.name ?? "…"}
+      </h1>
+      <p className="mb-6 text-sm text-muted">{property?.address}</p>
 
-      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-neutral-400">
+      <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
         {t("workHistory")}
       </h2>
-      {isPending && <p className="text-neutral-400">…</p>}
+      {isPending && <PageSpinner />}
       {!isPending && history.length === 0 && (
-        <p className="py-8 text-center text-neutral-400">{t("noWorkYet")}</p>
+        <EmptyState
+          icon={<ClipboardList size={22} aria-hidden />}
+          title={t("noWorkYet")}
+        />
       )}
       <div className="flex flex-col gap-3">
         {history.map((job) => (
           <Link
             key={job.id}
             href={`/properties/${id}/jobs/${job.id}`}
-            className="rounded-xl border border-neutral-200 bg-white p-3"
+            className="block"
           >
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold">{job.title}</h3>
-              <StatusBadge status={job.status} />
-            </div>
-            <p className="text-sm text-neutral-500">
-              {formatDayHeading(localDayKey(job.scheduledStart))}
-              {job.assignedWorker
-                ? ` · ${job.assignedWorker.name.split(" ")[0]}`
-                : ""}
-            </p>
+            <Card className="p-4 shadow-sm transition-[border-color,box-shadow] hover:border-border-strong hover:shadow-md">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="flex items-center gap-2 font-semibold text-fg">
+                  <JobTypeIcon
+                    type={job.type}
+                    size={15}
+                    className="text-subtle"
+                  />
+                  {job.title}
+                </h3>
+                <StatusBadge status={job.status} />
+              </div>
+              <p className="mt-1 flex items-center justify-between gap-2 text-sm text-muted">
+                <span className="tabular-nums">
+                  {formatDayHeading(localDayKey(job.scheduledStart))}
+                  {job.assignedWorker
+                    ? ` · ${job.assignedWorker.name.split(" ")[0]}`
+                    : ""}
+                </span>
+                <ChevronRight size={16} className="text-subtle" aria-hidden />
+              </p>
+            </Card>
           </Link>
         ))}
       </div>

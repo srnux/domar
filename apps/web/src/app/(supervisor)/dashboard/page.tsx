@@ -2,9 +2,16 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { CalendarCheck, Plus } from "lucide-react";
 import { JobCard } from "@/components/JobCard";
 import { formatDayHeading, groupByLocalDay, todayKey } from "@/lib/dates";
 import { useJobs } from "@/lib/jobs";
+import {
+  buttonClass,
+  EmptyState,
+  PageHeader,
+  PageSpinner,
+} from "@/components/ui";
 
 export default function DashboardPage() {
   const t = useTranslations("supervisor");
@@ -20,19 +27,22 @@ export default function DashboardPage() {
 
   return (
     <main className="mx-auto max-w-3xl p-4">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{t("weekAgenda")}</h1>
-        <Link
-          href="/jobs/new"
-          className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-semibold text-white"
-        >
-          + {t("newJob")}
-        </Link>
-      </div>
+      <PageHeader
+        title={t("weekAgenda")}
+        action={
+          <Link
+            href="/jobs/new"
+            className={buttonClass({ variant: "primary" })}
+          >
+            <Plus size={16} aria-hidden /> {t("newJob")}
+          </Link>
+        }
+      />
 
       {needsAttention.length > 0 && (
-        <section className="mb-6 rounded-xl border border-orange-200 bg-orange-50 p-3">
-          <h2 className="mb-2 text-sm font-semibold text-orange-800">
+        <section className="mb-6 rounded-lg border border-border border-l-[3px] border-l-warn-line bg-surface p-4 shadow-sm">
+          <h2 className="mb-3 flex items-center gap-2.5 text-sm font-semibold text-warn-fg">
+            <span className="dom-pulse" aria-hidden />
             {t("needsAttention", { count: needsAttention.length })}
           </h2>
           <div className="flex flex-col gap-2">
@@ -43,13 +53,16 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {isPending && <p className="text-neutral-400">…</p>}
+      {isPending && <PageSpinner />}
       {!isPending && grouped.size === 0 && (
-        <p className="py-8 text-center text-neutral-400">{t("noJobs")}</p>
+        <EmptyState
+          icon={<CalendarCheck size={22} aria-hidden />}
+          title={t("noJobs")}
+        />
       )}
       {[...grouped.entries()].map(([day, dayJobs]) => (
-        <section key={day} className="mb-5">
-          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-neutral-400">
+        <section key={day} className="mb-6">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
             {day === todayKey() ? t("today") : formatDayHeading(day)}
           </h2>
           <div className="flex flex-col gap-3">

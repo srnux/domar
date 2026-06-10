@@ -4,6 +4,7 @@ import type { Role } from "@domar/shared";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { ROLE_HOME, useMe } from "@/lib/auth";
+import { PageSpinner } from "@/components/ui";
 
 /**
  * Client-side gate for a role-scoped area. The server enforces permissions
@@ -29,8 +30,8 @@ export function RequireRole({
 
   if (isPending || isError || !me || me.role !== role) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-800" />
+      <div className="flex min-h-screen items-center justify-center bg-bg">
+        <PageSpinner />
       </div>
     );
   }

@@ -22,6 +22,34 @@ enum Skill {
   GENERAL
 }
 
+enum JobType {
+  CLEANING
+  REPAIR
+  ELECTRICAL
+  PLUMBING
+  INSPECTION
+  OTHER
+}
+
+enum JobStatus {
+  DRAFT
+  OPEN // reserved for the future claim-pool, unused in v1 flows
+  ASSIGNED
+  ACCEPTED
+  DECLINED
+  IN_PROGRESS
+  DONE
+  VERIFIED
+  CANCELLED
+}
+
+enum JobPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -36,6 +64,54 @@ model User {
   updatedAt    DateTime @updatedAt
 
   refreshTokens RefreshToken[]
+  properties    Property[]     @relation("PropertyOwner")
+  assignedJobs  Job[]          @relation("JobWorker")
+  createdJobs   Job[]          @relation("JobCreator")
+}
+
+model Property {
+  id          String   @id @default(uuid())
+  name        String
+  address     String
+  lat         Float?
+  lng         Float?
+  accessNotes String?
+  ownerId     String?
+  owner       User?    @relation("PropertyOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  jobs Job[]
+
+  @@index([ownerId])
+}
+
+model Job {
+  id               String      @id @default(uuid())
+  propertyId       String
+  property         Property    @relation(fields: [propertyId], references: [id])
+  type             JobType
+  title            String
+  description      String?
+  status           JobStatus   @default(DRAFT)
+  priority         JobPriority @default(NORMAL)
+  scheduledStart   DateTime
+  scheduledEnd     DateTime
+  assignedWorkerId String?
+  assignedWorker   User?       @relation("JobWorker", fields: [assignedWorkerId], references: [id], onDelete: SetNull)
+  createdById      String?
+  createdBy        User?       @relation("JobCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  /// Reason for the latest decline/reopen/cancel, surfaced to the supervisor.
+  statusReason     String?
+  workerNotes      String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@index([propertyId])
+  @@index([assignedWorkerId, scheduledStart])
+  @@index([status])
+  @@index([scheduledStart])
 }
 
 model RefreshToken {

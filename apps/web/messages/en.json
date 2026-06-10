@@ -88,6 +88,22 @@
     "confirmReopen": "Reopen job",
     "cancelJob": "Cancel job"
   },
+  "checklist": {
+    "title": "Checklist",
+    "photoNeeded": "Photo required"
+  },
+  "photos": {
+    "title": "Photos",
+    "BEFORE": "Before",
+    "AFTER": "After",
+    "ISSUE": "Issues",
+    "camera": "Camera",
+    "library": "Library",
+    "flagIssue": "Flag an issue",
+    "issueNote": "What's wrong?",
+    "issuePhoto": "Photo of the issue",
+    "submitIssue": "Report issue"
+  },
   "owner": {
     "myProperties": "My properties"
   }

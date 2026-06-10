@@ -1,4 +1,5 @@
 import type { JobPriority, JobStatus, JobType } from '../enums';
+import type { ChecklistItemDto, JobPhotoDto } from './checklist';
 
 export interface JobPropertyDto {
   id: string;
@@ -29,6 +30,8 @@ export interface JobDto {
   workerNotes: string | null;
   /** Status values the requesting user may move this job to. */
   allowedTransitions: JobStatus[];
+  checklistItems: ChecklistItemDto[];
+  photos: JobPhotoDto[];
   createdAt: string;
   updatedAt: string;
 }

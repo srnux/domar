@@ -3,6 +3,8 @@
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { JobChecklist } from "@/components/JobChecklist";
+import { JobPhotos } from "@/components/JobPhotos";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatDayHeading, formatTimeRange, localDayKey } from "@/lib/dates";
 import { useJob, useTransitionJob, useWorkers } from "@/lib/jobs";
@@ -75,6 +77,9 @@ export default function SupervisorJobPage({
           {job.description}
         </section>
       )}
+
+      <JobChecklist job={job} readOnly />
+      {job.photos.length > 0 && <JobPhotos job={job} canUpload={false} />}
 
       {transition.isError && (
         <p role="alert" className="text-sm text-red-600">

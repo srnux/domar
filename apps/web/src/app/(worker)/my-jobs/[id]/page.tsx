@@ -3,6 +3,8 @@
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { JobChecklist } from "@/components/JobChecklist";
+import { JobPhotos } from "@/components/JobPhotos";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatTimeRange, localDayKey, formatDayHeading } from "@/lib/dates";
 import { useJob, useTransitionJob } from "@/lib/jobs";
@@ -88,6 +90,14 @@ export default function WorkerJobPage({
         <section className="rounded-xl border border-neutral-200 bg-white p-3 text-sm text-neutral-700">
           {job.description}
         </section>
+      )}
+
+      <JobChecklist
+        job={job}
+        readOnly={job.status !== "IN_PROGRESS" && job.status !== "ACCEPTED"}
+      />
+      {(job.status === "IN_PROGRESS" || job.photos.length > 0) && (
+        <JobPhotos job={job} canUpload={job.status === "IN_PROGRESS"} />
       )}
 
       {job.statusReason && job.status === "ASSIGNED" && (

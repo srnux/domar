@@ -26,6 +26,27 @@ const jobInclude = {
     },
   },
   assignedWorker: { select: { id: true, name: true } },
+  checklistItems: {
+    orderBy: { sortOrder: 'asc' },
+    select: {
+      id: true,
+      text: true,
+      photoRequired: true,
+      done: true,
+      sortOrder: true,
+    },
+  },
+  photos: {
+    orderBy: { createdAt: 'asc' },
+    select: {
+      id: true,
+      kind: true,
+      caption: true,
+      checklistItemId: true,
+      uploadedById: true,
+      createdAt: true,
+    },
+  },
 } satisfies Prisma.JobInclude;
 
 type JobWithRelations = Prisma.JobGetPayload<{ include: typeof jobInclude }>;
@@ -75,6 +96,16 @@ export class JobsService {
       await this.assertActiveWorker(dto.assignedWorkerId);
     }
 
+    // Cleaning jobs snapshot the property's checklist template — a copy,
+    // so later template edits never rewrite history.
+    const templateItems =
+      dto.type === 'CLEANING'
+        ? await this.prisma.checklistTemplateItem.findMany({
+            where: { template: { propertyId: dto.propertyId } },
+            orderBy: { sortOrder: 'asc' },
+          })
+        : [];
+
     const job = await this.prisma.job.create({
       data: {
         propertyId: dto.propertyId,
@@ -87,6 +118,13 @@ export class JobsService {
         assignedWorkerId: dto.assignedWorkerId,
         status: dto.assignedWorkerId ? JobStatus.ASSIGNED : JobStatus.DRAFT,
         createdById: actor.sub,
+        checklistItems: {
+          create: templateItems.map((item, i) => ({
+            text: item.text,
+            photoRequired: item.photoRequired,
+            sortOrder: i,
+          })),
+        },
       },
       include: jobInclude,
     });
@@ -126,6 +164,10 @@ export class JobsService {
       throw new ConflictException(verdict.error);
     }
 
+    if (dto.to === JobStatus.DONE) {
+      await this.assertChecklistComplete(job.id);
+    }
+
     const data: Prisma.JobUpdateInput = { status: dto.to };
 
     if (dto.to === JobStatus.ASSIGNED) {
@@ -150,6 +192,28 @@ export class JobsService {
       include: jobInclude,
     });
     return this.toDto(updated, actor);
+  }
+
+  /** Finishing requires every item checked and photo-required items shot. */
+  private async assertChecklistComplete(jobId: string) {
+    const items = await this.prisma.checklistItem.findMany({
+      where: { jobId },
+      include: { photos: { select: { id: true } } },
+    });
+    const unchecked = items.filter((i) => !i.done);
+    if (unchecked.length > 0) {
+      throw new ConflictException(
+        `Checklist incomplete: ${unchecked.map((i) => i.text).join(', ')}`,
+      );
+    }
+    const missingPhoto = items.filter(
+      (i) => i.photoRequired && i.photos.length === 0,
+    );
+    if (missingPhoto.length > 0) {
+      throw new ConflictException(
+        `Photo required: ${missingPhoto.map((i) => i.text).join(', ')}`,
+      );
+    }
   }
 
   private async assertActiveWorker(workerId: string) {

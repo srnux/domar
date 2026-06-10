@@ -74,6 +74,20 @@ describe("api client", () => {
     expect(refreshCalls).toHaveLength(1);
   });
 
+  it("sends FormData without forcing a JSON content type", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(201, { id: "p1" }));
+    const form = new FormData();
+    form.append("kind", "BEFORE");
+
+    await api("/api/jobs/1/photos", { method: "POST", body: form });
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect(
+      (init.headers as Record<string, string>)["Content-Type"],
+    ).toBeUndefined();
+    expect(init.body).toBe(form);
+  });
+
   it("does not try to refresh after a failed login", async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse(401, { message: "Invalid credentials" }),

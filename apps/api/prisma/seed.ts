@@ -87,6 +87,48 @@ async function main() {
     44.1067, 15.2367,
   );
 
+  const ensureTemplate = async (
+    propertyId: string,
+    items: Array<{ text: string; photoRequired?: boolean }>,
+  ) => {
+    const existing = await prisma.checklistTemplate.findUnique({
+      where: { propertyId },
+    });
+    if (existing) return;
+    await prisma.checklistTemplate.create({
+      data: {
+        propertyId,
+        items: {
+          create: items.map((item, i) => ({
+            text: item.text,
+            photoRequired: item.photoRequired ?? false,
+            sortOrder: i,
+          })),
+        },
+      },
+    });
+  };
+
+  await ensureTemplate(poluotok.id, [
+    { text: 'Strip and remake all beds' },
+    { text: 'Vacuum and mop all floors' },
+    { text: 'Clean bathroom incl. drain hair' },
+    { text: 'Restock: 2x toilet paper, soap, dish tabs' },
+    { text: 'After photo of bathroom', photoRequired: true },
+    { text: 'After photo of kitchen', photoRequired: true },
+  ]);
+  await ensureTemplate(borik.id, [
+    { text: 'Full turnover cleaning' },
+    { text: 'Skim pool surface, check skimmer basket' },
+    { text: 'Reset gate remote to mailbox' },
+    { text: 'After photo of living room', photoRequired: true },
+  ]);
+  await ensureTemplate(petrcane.id, [
+    { text: 'Turnover cleaning' },
+    { text: 'Take bins out (behind the house)' },
+    { text: 'Check smart lock battery' },
+  ]);
+
   if ((await prisma.job.count()) === 0) {
     await prisma.job.createMany({
       data: [

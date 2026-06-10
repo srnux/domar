@@ -17,9 +17,6 @@
     "incremental": true,
     "skipLibCheck": true,
     "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "paths": {
-      "@domar/shared": ["../../packages/shared/src/index.ts"]
-    }
+    "forceConsistentCasingInFileNames": true
   }
 }

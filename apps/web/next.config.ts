@@ -11,7 +11,6 @@ const API_URL = process.env.API_URL ?? "http://localhost:3001";
 const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: path.join(__dirname, "../.."),
-  transpilePackages: ["@domar/shared"],
   async rewrites() {
     return [
       {

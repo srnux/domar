@@ -3,6 +3,7 @@
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { CommentThread } from "@/components/CommentThread";
 import { JobChecklist } from "@/components/JobChecklist";
 import { JobPhotos } from "@/components/JobPhotos";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -105,6 +106,9 @@ export default function WorkerJobPage({
           {t("reopenedNote", { reason: job.statusReason })}
         </p>
       )}
+
+      <CommentThread jobId={job.id} canChooseVisibility />
+
 
       {transition.isError && (
         <p role="alert" className="text-sm text-red-600">

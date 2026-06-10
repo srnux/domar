@@ -29,6 +29,9 @@ export default function SupervisorLayout({
             <Link href="/jobs/new" className="text-neutral-600">
               {t("newJob")}
             </Link>
+            <Link href="/verify" className="text-neutral-600">
+              {t("verifyQueue")}
+            </Link>
             <button
               onClick={() =>
                 logout.mutate(undefined, {

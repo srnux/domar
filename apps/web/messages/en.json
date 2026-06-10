@@ -83,10 +83,21 @@
     "selectWorker": "Select a worker…",
     "assign": "Assign",
     "verify": "Verify work",
+    "verifyQueue": "To verify",
+    "verifyQueueHint": "Finished jobs waiting for your review.",
+    "nothingToVerify": "Nothing waiting for review 🎉",
     "reopen": "Reopen",
     "reopenReason": "What needs to be redone?",
     "confirmReopen": "Reopen job",
     "cancelJob": "Cancel job"
+  },
+  "comments": {
+    "title": "Comments",
+    "empty": "No comments yet.",
+    "internal": "Internal",
+    "placeholder": "Write a comment…",
+    "visibleToOwner": "Visible to owner",
+    "send": "Send"
   },
   "checklist": {
     "title": "Checklist",

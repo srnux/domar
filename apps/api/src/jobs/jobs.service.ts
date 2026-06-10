@@ -191,6 +191,19 @@ export class JobsService {
       data,
       include: jobInclude,
     });
+
+    // A reopen (done → assigned) lands in the thread so the worker sees why.
+    if (job.status === JobStatus.DONE && dto.to === JobStatus.ASSIGNED) {
+      await this.prisma.jobComment.create({
+        data: {
+          jobId: id,
+          authorId: actor.sub,
+          body: `Reopened: ${dto.reason}`,
+          visibility: 'INTERNAL',
+        },
+      });
+    }
+
     return this.toDto(updated, actor);
   }
 

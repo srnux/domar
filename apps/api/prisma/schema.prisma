@@ -68,6 +68,7 @@ model User {
   assignedJobs   Job[]          @relation("JobWorker")
   createdJobs    Job[]          @relation("JobCreator")
   uploadedPhotos JobPhoto[]
+  comments       JobComment[]
 }
 
 model Property {
@@ -112,6 +113,24 @@ enum PhotoKind {
   BEFORE
   AFTER
   ISSUE
+}
+
+enum CommentVisibility {
+  INTERNAL // supervisor <-> worker only
+  SHARED // visible to the property owner too
+}
+
+model JobComment {
+  id         String            @id @default(uuid())
+  jobId      String
+  job        Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  authorId   String?
+  author     User?             @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  body       String
+  visibility CommentVisibility @default(INTERNAL)
+  createdAt  DateTime          @default(now())
+
+  @@index([jobId, createdAt])
 }
 
 model ChecklistItem {
@@ -170,6 +189,7 @@ model Job {
 
   checklistItems ChecklistItem[]
   photos         JobPhoto[]
+  comments       JobComment[]
 
   @@index([propertyId])
   @@index([assignedWorkerId, scheduledStart])

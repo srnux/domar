@@ -3,6 +3,7 @@
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { CommentThread } from "@/components/CommentThread";
 import { JobChecklist } from "@/components/JobChecklist";
 import { JobPhotos } from "@/components/JobPhotos";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -80,6 +81,8 @@ export default function SupervisorJobPage({
 
       <JobChecklist job={job} readOnly />
       {job.photos.length > 0 && <JobPhotos job={job} canUpload={false} />}
+
+      <CommentThread jobId={job.id} canChooseVisibility />
 
       {transition.isError && (
         <p role="alert" className="text-sm text-red-600">

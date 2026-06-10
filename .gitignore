@@ -10,5 +10,8 @@ coverage/
 
 uploads/
 *.log
+
+docker-compose.override.yml
 .DS_Store
 Thumbs.db
+.claude/settings.json

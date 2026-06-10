@@ -35,6 +35,12 @@ export default function SupervisorLayout({
             <Link href="/bookings" className="text-neutral-600">
               {t("bookings")}
             </Link>
+            <Link href="/manage/properties" className="text-neutral-600">
+              {t("properties")}
+            </Link>
+            <Link href="/users" className="text-neutral-600">
+              {t("team")}
+            </Link>
             <button
               onClick={() =>
                 logout.mutate(undefined, {

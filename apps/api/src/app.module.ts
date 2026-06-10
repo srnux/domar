@@ -5,6 +5,7 @@ import { BookingsModule } from './bookings/bookings.module';
 import { ChecklistsModule } from './checklists/checklists.module';
 import { CommentsModule } from './comments/comments.module';
 import { HealthController } from './health/health.controller';
+import { InvitesModule } from './invites/invites.module';
 import { JobsModule } from './jobs/jobs.module';
 import { PhotosModule } from './photos/photos.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -23,6 +24,7 @@ import { UsersModule } from './users/users.module';
     PhotosModule,
     CommentsModule,
     BookingsModule,
+    InvitesModule,
   ],
   controllers: [HealthController],
 })

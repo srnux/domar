@@ -217,6 +217,20 @@ model Job {
   @@index([scheduledStart])
 }
 
+model Invite {
+  id          String    @id @default(uuid())
+  email       String
+  role        Role
+  skills      Skill[]   @default([])
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  invitedById String?
+  createdAt   DateTime  @default(now())
+
+  @@index([email])
+}
+
 model RefreshToken {
   id        String   @id @default(uuid())
   tokenHash String   @unique

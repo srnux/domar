@@ -87,6 +87,8 @@
     "verifyQueueHint": "Finished jobs waiting for your review.",
     "nothingToVerify": "Nothing waiting for review 🎉",
     "bookings": "Bookings",
+    "properties": "Properties",
+    "team": "Team",
     "skillFiltered": "Only workers qualified for {type} are shown.",
     "conflictHint": "{count, plural, one {This worker already has # job in that window:} other {This worker already has # jobs in that window:}}",
     "reopen": "Reopen",
@@ -135,7 +137,49 @@
     "issuePhoto": "Photo of the issue",
     "submitIssue": "Report issue"
   },
+  "invite": {
+    "invalid": "This invite link is invalid or has expired. Ask your supervisor for a new one.",
+    "welcome": "Set up your account for {email}",
+    "name": "Your name",
+    "password": "Choose a password (min. 8 characters)",
+    "createAccount": "Create account"
+  },
+  "users": {
+    "title": "Team",
+    "invite": "Invite someone",
+    "email": "Email address",
+    "sendInvite": "Create invite link",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "deactivate": "Deactivate",
+    "reactivate": "Reactivate",
+    "SUPERVISOR": "Supervisors",
+    "WORKER": "Workers",
+    "OWNER": "Owners"
+  },
+  "properties": {
+    "title": "Properties",
+    "add": "Add property",
+    "edit": "Edit {name}",
+    "name": "Name",
+    "address": "Address",
+    "accessNotes": "Access notes",
+    "accessNotesHint": "Key box code, parking, wifi — what a worker needs at the door",
+    "owner": "Owner",
+    "noOwner": "No owner linked",
+    "cleaningChecklist": "Cleaning checklist template",
+    "addItem": "Add item",
+    "active": "Active",
+    "saving": "Saving…",
+    "save": "Save"
+  },
   "owner": {
-    "myProperties": "My properties"
+    "myProperties": "My properties",
+    "noProperties": "No properties linked to your account yet.",
+    "back": "Back",
+    "workHistory": "Work history",
+    "noWorkYet": "No work recorded yet.",
+    "photos": "Photos",
+    "signOut": "Sign out"
   }
 }

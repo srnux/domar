@@ -14,7 +14,11 @@ function baseOptions(): CookieOptions {
   return {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    // COOKIE_SECURE=false permits plain-HTTP deployments (LAN testing);
+    // anything public must run behind HTTPS
+    secure:
+      process.env.NODE_ENV === 'production' &&
+      process.env.COOKIE_SECURE !== 'false',
   };
 }
 

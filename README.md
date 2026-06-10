@@ -26,6 +26,18 @@ The web app talks to the API only through the Next.js rewrite proxy
 (same-origin), which the httpOnly cookie auth depends on — never call
 `localhost:3001` from browser code.
 
+## Production (Docker Compose)
+
+```sh
+cp .env.example .env       # set POSTGRES_PASSWORD and JWT_SECRET
+docker compose build
+docker compose up -d       # app on http://localhost:8080
+docker compose exec api node dist/prisma/seed.js   # optional demo data
+```
+
+Photos persist in the `domar_uploads` volume, data in `domar_pgdata`.
+The api container runs `prisma migrate deploy` on every start.
+
 ## Testing
 
 ```sh

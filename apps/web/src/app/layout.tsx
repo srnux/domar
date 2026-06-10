@@ -18,11 +18,21 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Domar",
   description: "Property care for holiday rentals",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Domar",
+    statusBarStyle: "default",
+  },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: "#171717",
 };
 
 export default async function RootLayout({

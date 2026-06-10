@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
+import { BookingsModule } from './bookings/bookings.module';
 import { ChecklistsModule } from './checklists/checklists.module';
 import { CommentsModule } from './comments/comments.module';
 import { HealthController } from './health/health.controller';
@@ -21,6 +22,7 @@ import { UsersModule } from './users/users.module';
     ChecklistsModule,
     PhotosModule,
     CommentsModule,
+    BookingsModule,
   ],
   controllers: [HealthController],
 })

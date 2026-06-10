@@ -193,7 +193,33 @@ async function main() {
     });
   }
 
-  console.log(`Seeded: 7 users (password: ${PASSWORD}), 5 properties, ${await prisma.job.count()} jobs`);
+  if ((await prisma.booking.count()) === 0) {
+    await prisma.booking.createMany({
+      data: [
+        // perfect turnover gap tomorrow
+        {
+          propertyId: poluotok.id,
+          checkoutAt: at(1, 10),
+          checkinAt: at(1, 16),
+          guestNote: 'Couple from Vienna, 5 nights',
+        },
+        // tight same-day gap
+        {
+          propertyId: borik.id,
+          checkoutAt: at(2, 10),
+          checkinAt: at(2, 12),
+          guestNote: 'Back-to-back! Family of six arriving.',
+        },
+        // open-ended: no next guest yet
+        {
+          propertyId: kolovare.id,
+          checkoutAt: at(4, 10),
+        },
+      ],
+    });
+  }
+
+  console.log(`Seeded: 7 users (password: ${PASSWORD}), 5 properties, ${await prisma.job.count()} jobs, ${await prisma.booking.count()} bookings`);
   console.log('Logins: ana@ (supervisor), marko@/ivan@/petra@ (workers), klaus@/lena@ (owners) — all @domar.test');
 }
 

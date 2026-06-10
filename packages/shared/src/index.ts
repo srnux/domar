@@ -6,3 +6,4 @@ export * from './types/property';
 export * from './types/job';
 export * from './types/checklist';
 export * from './types/comment';
+export * from './types/booking';

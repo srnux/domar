@@ -85,6 +85,7 @@ model Property {
   updatedAt   DateTime @updatedAt
 
   jobs              Job[]
+  bookings          Booking[]
   checklistTemplate ChecklistTemplate?
 
   @@index([ownerId])
@@ -118,6 +119,24 @@ enum PhotoKind {
 enum CommentVisibility {
   INTERNAL // supervisor <-> worker only
   SHARED // visible to the property owner too
+}
+
+model Booking {
+  id            String   @id @default(uuid())
+  propertyId    String
+  property      Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  /// When the current guest leaves (start of the turnover window).
+  checkoutAt    DateTime
+  /// When the next guest arrives, if known.
+  checkinAt     DateTime?
+  guestNote     String?
+  /// The turnover cleaning created for this gap, once the supervisor acts.
+  turnoverJobId String?  @unique
+  turnoverJob   Job?     @relation(fields: [turnoverJobId], references: [id], onDelete: SetNull)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([propertyId, checkoutAt])
 }
 
 model JobComment {
@@ -190,6 +209,7 @@ model Job {
   checklistItems ChecklistItem[]
   photos         JobPhoto[]
   comments       JobComment[]
+  booking        Booking?
 
   @@index([propertyId])
   @@index([assignedWorkerId, scheduledStart])

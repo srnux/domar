@@ -1,27 +1,68 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { JobType } from "@domar/shared";
-import { useCreateJob, useProperties, useWorkers } from "@/lib/jobs";
+import { findConflicts, workerMatchesJobType } from "@/lib/assign";
+import { useUpdateBooking } from "@/lib/bookings";
+import { formatTimeRange } from "@/lib/dates";
+import { useCreateJob, useJobs, useProperties, useWorkers } from "@/lib/jobs";
 
-export default function NewJobPage() {
+function toLocalInput(iso: string, part: "date" | "time"): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return part === "date"
+    ? `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    : `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function NewJobForm() {
   const t = useTranslations("supervisor");
   const tj = useTranslations("jobType");
   const router = useRouter();
+  const params = useSearchParams();
   const { data: properties } = useProperties();
   const { data: workers } = useWorkers();
+  const { data: allJobs } = useJobs();
   const createJob = useCreateJob();
+  const linkBooking = useUpdateBooking();
 
-  const [propertyId, setPropertyId] = useState("");
-  const [type, setType] = useState<JobType>("CLEANING");
-  const [title, setTitle] = useState("");
+  const prefillStart = params.get("start");
+  const prefillEnd = params.get("end");
+  const bookingId = params.get("bookingId");
+
+  const [propertyId, setPropertyId] = useState(params.get("propertyId") ?? "");
+  const [type, setType] = useState<JobType>(
+    (params.get("type") as JobType) ?? "CLEANING",
+  );
+  const [title, setTitle] = useState(params.get("title") ?? "");
   const [description, setDescription] = useState("");
-  const [date, setDate] = useState("");
-  const [startTime, setStartTime] = useState("10:00");
-  const [endTime, setEndTime] = useState("13:00");
+  const [date, setDate] = useState(
+    prefillStart ? toLocalInput(prefillStart, "date") : "",
+  );
+  const [startTime, setStartTime] = useState(
+    prefillStart ? toLocalInput(prefillStart, "time") : "10:00",
+  );
+  const [endTime, setEndTime] = useState(
+    prefillEnd ? toLocalInput(prefillEnd, "time") : "13:00",
+  );
   const [workerId, setWorkerId] = useState("");
+
+  const eligibleWorkers = useMemo(
+    () => (workers ?? []).filter((w) => workerMatchesJobType(w, type)),
+    [workers, type],
+  );
+
+  const conflicts = useMemo(() => {
+    if (!workerId || !date) return [];
+    return findConflicts(
+      allJobs ?? [],
+      workerId,
+      new Date(`${date}T${startTime}`).toISOString(),
+      new Date(`${date}T${endTime}`).toISOString(),
+    );
+  }, [allJobs, workerId, date, startTime, endTime]);
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,7 +76,14 @@ export default function NewJobPage() {
         scheduledEnd: new Date(`${date}T${endTime}`).toISOString(),
         assignedWorkerId: workerId || undefined,
       },
-      { onSuccess: () => router.push("/dashboard") },
+      {
+        onSuccess: (job) => {
+          if (bookingId) {
+            linkBooking.mutate({ id: bookingId, turnoverJobId: job.id });
+          }
+          router.push("/dashboard");
+        },
+      },
     );
   }
 
@@ -143,13 +191,33 @@ export default function NewJobPage() {
             className={input}
           >
             <option value="">{t("leaveUnassigned")}</option>
-            {(workers ?? []).map((w) => (
+            {eligibleWorkers.map((w) => (
               <option key={w.id} value={w.id}>
                 {w.name} ({w.skills.map((s) => tj(s as never)).join(", ")})
               </option>
             ))}
           </select>
+          {workers && eligibleWorkers.length < workers.length && (
+            <span className="text-xs text-neutral-400">
+              {t("skillFiltered", { type: tj(type) })}
+            </span>
+          )}
         </label>
+
+        {conflicts.length > 0 && (
+          <div className="rounded-lg bg-orange-50 p-2 text-sm text-orange-700">
+            ⚠{" "}
+            {t("conflictHint", { count: conflicts.length })}
+            <ul className="mt-1 list-inside list-disc">
+              {conflicts.map((c) => (
+                <li key={c.id}>
+                  {c.title} ·{" "}
+                  {formatTimeRange(c.scheduledStart, c.scheduledEnd)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {createJob.isError && (
           <p role="alert" className="text-sm text-red-600">
@@ -166,5 +234,13 @@ export default function NewJobPage() {
         </button>
       </form>
     </main>
+  );
+}
+
+export default function NewJobPage() {
+  return (
+    <Suspense>
+      <NewJobForm />
+    </Suspense>
   );
 }

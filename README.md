@@ -19,7 +19,7 @@ Prereqs: Node ≥ 24, pnpm, Docker (works via WSL: `wsl docker ...`).
 ```sh
 pnpm install
 pnpm db:up        # postgres via docker-compose.dev.yml (WSL docker)
-pnpm dev          # api on :3001, web on :3000 (proxies /api/* to the api)
+pnpm dev          # api on :3001, web on :3002 (3000 is often taken by WSL dev servers) (proxies /api/* to the api)
 ```
 
 The web app talks to the API only through the Next.js rewrite proxy
@@ -32,3 +32,4 @@ The web app talks to the API only through the Next.js rewrite proxy
 pnpm test                       # all workspaces
 pnpm --filter @domar/api test:e2e
 ```
+

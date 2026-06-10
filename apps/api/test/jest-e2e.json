@@ -8,5 +8,8 @@
   },
   "moduleNameMapper": {
     "^@domar/shared$": "<rootDir>/../../../packages/shared/src/index.ts"
-  }
+  },
+  "globalSetup": "<rootDir>/global-setup.ts",
+  "setupFiles": ["<rootDir>/setup-env.ts"],
+  "maxWorkers": 1
 }

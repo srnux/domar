@@ -10,8 +10,9 @@ describe("shared package wiring", () => {
 });
 
 describe("messages", () => {
-  it("has the keys the home page uses", () => {
+  it("has the keys the auth flow uses", () => {
     expect(en.common.appName).toBeTruthy();
-    expect(en.home.apiStatus).toContain("{status}");
+    expect(en.auth.signIn).toBeTruthy();
+    expect(en.worker.greeting).toContain("{name}");
   });
 });

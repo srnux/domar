@@ -8,7 +8,7 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
-    "db:up": "wsl -d Ubuntu docker compose -f docker-compose.dev.yml up -d",
+    "db:up": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/db-up.ps1",
     "db:down": "wsl -d Ubuntu docker compose -f docker-compose.dev.yml down",
     "seed": "pnpm --filter @domar/api seed"
   },

@@ -3,8 +3,24 @@
     "appName": "Domar",
     "tagline": "Property care for holiday rentals"
   },
-  "home": {
-    "apiStatus": "API status: {status}",
-    "apiUnreachable": "API unreachable"
+  "auth": {
+    "subtitle": "Sign in to your account",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "invalidCredentials": "Wrong email or password"
+  },
+  "worker": {
+    "myDay": "My Day",
+    "greeting": "Hi {name}, here are your jobs."
+  },
+  "supervisor": {
+    "dashboard": "Dashboard",
+    "signOut": "Sign out",
+    "greeting": "Welcome back, {name}."
+  },
+  "owner": {
+    "myProperties": "My properties"
   }
 }

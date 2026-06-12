@@ -13,6 +13,13 @@ const timeFormat = new Intl.DateTimeFormat("en-GB", {
   minute: "2-digit",
 });
 
+const minutesFormat = new Intl.DateTimeFormat("en-GB", {
+  timeZone: DISPLAY_TIMEZONE,
+  hourCycle: "h23",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
 const headingFormat = new Intl.DateTimeFormat("en-GB", {
   timeZone: DISPLAY_TIMEZONE,
   weekday: "short",
@@ -23,6 +30,14 @@ const headingFormat = new Intl.DateTimeFormat("en-GB", {
 /** "YYYY-MM-DD" of the instant in the display timezone (Europe/Zagreb). */
 export function localDayKey(iso: string): string {
   return dayKeyFormat.format(new Date(iso));
+}
+
+/** Minutes after midnight of the instant in the display timezone (0–1439). */
+export function zagrebMinutesOfDay(iso: string): number {
+  const parts = minutesFormat.formatToParts(new Date(iso));
+  const get = (type: string) =>
+    Number(parts.find((p) => p.type === type)?.value ?? 0);
+  return get("hour") * 60 + get("minute");
 }
 
 export function formatTimeRange(startIso: string, endIso: string): string {

@@ -4,7 +4,13 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { CalendarCheck, Plus } from "lucide-react";
 import { JobCard } from "@/components/JobCard";
-import { formatDayHeading, groupByLocalDay, todayKey } from "@/lib/dates";
+import { TodayAgenda } from "@/components/agenda/TodayAgenda";
+import {
+  formatDayHeading,
+  groupByLocalDay,
+  localDayKey,
+  todayKey,
+} from "@/lib/dates";
 import { useJobs } from "@/lib/jobs";
 import {
   buttonClass,
@@ -17,13 +23,21 @@ export default function DashboardPage() {
   const t = useTranslations("supervisor");
   const { data: jobs, isPending } = useJobs();
 
+  const today = todayKey();
   const needsAttention = (jobs ?? []).filter(
     (j) => j.status === "DRAFT" || j.status === "DECLINED",
   );
   const active = (jobs ?? []).filter(
     (j) => j.status !== "VERIFIED" && j.status !== "CANCELLED",
   );
-  const grouped = groupByLocalDay(active, (j) => j.scheduledStart);
+  // Today lives in the agenda timeline; the list below covers other days.
+  const hasTodayJobs = (jobs ?? []).some(
+    (j) => j.status !== "CANCELLED" && localDayKey(j.scheduledStart) === today,
+  );
+  const grouped = groupByLocalDay(
+    active.filter((j) => localDayKey(j.scheduledStart) !== today),
+    (j) => j.scheduledStart,
+  );
 
   return (
     <main className="mx-auto max-w-3xl p-4">
@@ -54,7 +68,8 @@ export default function DashboardPage() {
       )}
 
       {isPending && <PageSpinner />}
-      {!isPending && grouped.size === 0 && (
+      {!isPending && <TodayAgenda jobs={jobs ?? []} />}
+      {!isPending && !hasTodayJobs && grouped.size === 0 && (
         <EmptyState
           icon={<CalendarCheck size={22} aria-hidden />}
           title={t("noJobs")}
@@ -63,7 +78,7 @@ export default function DashboardPage() {
       {[...grouped.entries()].map(([day, dayJobs]) => (
         <section key={day} className="mb-6">
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
-            {day === todayKey() ? t("today") : formatDayHeading(day)}
+            {formatDayHeading(day)}
           </h2>
           <div className="flex flex-col gap-3">
             {dayJobs.map((job) => (

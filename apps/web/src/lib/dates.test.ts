@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { formatDayHeading, formatTimeRange, localDayKey } from "./dates";
+import {
+  formatDayHeading,
+  formatTimeRange,
+  localDayKey,
+  zagrebMinutesOfDay,
+} from "./dates";
 
 // All helpers render in Europe/Zagreb (CET/CEST) regardless of host TZ.
 describe("localDayKey", () => {
@@ -23,6 +28,23 @@ describe("formatTimeRange", () => {
     expect(
       formatTimeRange("2026-06-10T08:00:00.000Z", "2026-06-10T11:00:00.000Z"),
     ).toBe("10:00 – 13:00");
+  });
+});
+
+describe("zagrebMinutesOfDay", () => {
+  it("converts a summer instant (CEST, UTC+2)", () => {
+    // 07:30 UTC on Jun 10 is 09:30 in Zagreb
+    expect(zagrebMinutesOfDay("2026-06-10T07:30:00.000Z")).toBe(9 * 60 + 30);
+  });
+
+  it("converts a winter instant (CET, UTC+1)", () => {
+    // 13:15 UTC on Jan 5 is 14:15 in Zagreb
+    expect(zagrebMinutesOfDay("2026-01-05T13:15:00.000Z")).toBe(14 * 60 + 15);
+  });
+
+  it("returns 0 at Zagreb midnight, not 1440", () => {
+    // 22:00 UTC on Jun 9 is 00:00 on Jun 10 in Zagreb
+    expect(zagrebMinutesOfDay("2026-06-09T22:00:00.000Z")).toBe(0);
   });
 });
 

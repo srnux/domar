@@ -242,6 +242,83 @@ body {
   }
 }
 
+/* ============================================================
+   Agenda job block  ·  <a class="dom-agenda-job <status>">
+   Timeline blocks on the supervisor dashboard. Colour variants
+   mirror dom-pill — one status → colour mapping across the app.
+   ============================================================ */
+@utility dom-agenda-job {
+  position: absolute;
+  top: 8px;
+  height: 40px; /* lane height 56px − 2 × 8px */
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+  font-size: 11.5px;
+  line-height: 1.35;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: 1px solid;
+  transition:
+    transform 80ms,
+    box-shadow 120ms;
+}
+.dom-agenda-job:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.dom-jdot {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.dom-agenda-job.draft {
+  color: var(--color-muted);
+  background: var(--color-st-draft-soft);
+  border-color: oklch(91% 0.005 250);
+}
+.dom-agenda-job.assigned {
+  color: var(--color-st-assigned);
+  background: var(--color-st-assigned-soft);
+  border-color: oklch(85% 0.08 255);
+}
+.dom-agenda-job.accepted {
+  color: var(--color-st-accepted);
+  background: var(--color-st-accepted-soft);
+  border-color: oklch(85% 0.06 220);
+}
+.dom-agenda-job.progress {
+  color: oklch(40% 0.12 60);
+  background: var(--color-st-progress-soft);
+  border-color: oklch(85% 0.08 70);
+}
+.dom-agenda-job.progress .dom-jdot {
+  background: var(--color-st-progress);
+  animation: dom-blink 1.6s infinite;
+}
+.dom-agenda-job.declined {
+  color: var(--color-st-declined);
+  background: var(--color-st-declined-soft);
+  border-color: oklch(85% 0.09 35);
+}
+.dom-agenda-job.done {
+  color: var(--color-st-done);
+  background: var(--color-st-done-soft);
+  border-color: oklch(86% 0.07 295);
+}
+.dom-agenda-job.verified {
+  color: var(--color-st-verified);
+  background: var(--color-st-verified-soft);
+  border-color: oklch(88% 0.07 165);
+}
+
 /* Frosted sticky bar used by the app chrome */
 @utility dom-frost {
   background: oklch(100% 0 0 / 0.72);

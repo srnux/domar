@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
  * variant (see globals.css). Statuses stay distinguishable at a glance in a
  * long list, outdoors, on a phone — colour + a leading dot, never colour alone.
  */
-const STATUS_VARIANT: Record<JobStatus, string> = {
+export const STATUS_VARIANT: Record<JobStatus, string> = {
   DRAFT: "draft",
   OPEN: "draft",
   ASSIGNED: "assigned",

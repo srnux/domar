@@ -8,5 +8,6 @@ export type { CalloutVariant } from "./Callout";
 export { Spinner, PageSpinner } from "./Spinner";
 export { EmptyState } from "./EmptyState";
 export { PageHeader } from "./PageHeader";
+export { Segmented } from "./Segmented";
 export { Brand, BrandMark } from "./Brand";
 export { UserAvatar } from "./UserAvatar";

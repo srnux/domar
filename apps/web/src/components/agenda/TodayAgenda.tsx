@@ -19,32 +19,56 @@ import {
 } from "./agenda-layout";
 
 /**
- * Horizontal per-worker timeline of today's jobs. Receives the full job
- * list and filters to today itself; renders nothing on an empty day.
+ * Horizontal per-worker timeline of today's jobs. Thin wrapper over
+ * {@link DayAgenda} pinned to the current day.
  */
 export function TodayAgenda({ jobs }: { jobs: JobDto[] }) {
+  const t = useTranslations("supervisor");
+  return (
+    <DayAgenda jobs={jobs} dayKey={todayKey()} title={t("todayAgenda")} />
+  );
+}
+
+/**
+ * Horizontal per-worker timeline for a single day. Receives the full job
+ * list and filters to `dayKey` itself; renders nothing on an empty day.
+ * The "now" line and one-time auto-scroll only apply when `dayKey` is today.
+ */
+export function DayAgenda({
+  jobs,
+  dayKey,
+  title,
+}: {
+  jobs: JobDto[];
+  dayKey: string;
+  title: string;
+}) {
   const t = useTranslations("supervisor");
   const tStatus = useTranslations("status");
   const tType = useTranslations("jobType");
   const { data: workers } = useWorkers();
 
+  const isToday = dayKey === todayKey();
+
   const [nowMinutes, setNowMinutes] = useState(() =>
     zagrebMinutesOfDay(new Date().toISOString()),
   );
   useEffect(() => {
+    if (!isToday) return;
     const id = setInterval(
       () => setNowMinutes(zagrebMinutesOfDay(new Date().toISOString())),
       60_000,
     );
     return () => clearInterval(id);
-  }, []);
+  }, [isToday]);
 
   const model = useMemo(
-    () => buildAgendaModel(jobs, workers, todayKey()),
-    [jobs, workers],
+    () => buildAgendaModel(jobs, workers, dayKey),
+    [jobs, workers, dayKey],
   );
 
-  const nowLeft = model ? nowLineLeftPx(nowMinutes, model) : null;
+  const nowLeft =
+    isToday && model ? nowLineLeftPx(nowMinutes, model) : null;
 
   // Bring the now line into view once — afternoons start off-screen otherwise.
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -78,7 +102,7 @@ export function TodayAgenda({ jobs }: { jobs: JobDto[] }) {
   return (
     <Card className="mb-6">
       <CardHeader
-        title={t("todayAgenda")}
+        title={title}
         count={t("agendaSummary", {
           jobs: model.jobCount,
           workers: model.workerCount,

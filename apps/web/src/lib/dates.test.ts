@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  addMonthsToKey,
   formatDayHeading,
   formatTimeRange,
   localDayKey,
+  monthGridDays,
+  startOfMonthKey,
+  weekdayMonIndex,
   zagrebMinutesOfDay,
 } from "./dates";
 
@@ -52,5 +56,54 @@ describe("formatDayHeading", () => {
   it("renders a readable weekday with date", () => {
     expect(formatDayHeading("2026-06-10")).toMatch(/Wed/);
     expect(formatDayHeading("2026-06-10")).toMatch(/10/);
+  });
+});
+
+describe("startOfMonthKey", () => {
+  it("returns the first of the containing month", () => {
+    expect(startOfMonthKey("2026-06-13")).toBe("2026-06-01");
+  });
+});
+
+describe("addMonthsToKey", () => {
+  it("rolls forward across the year boundary", () => {
+    expect(addMonthsToKey("2026-12-01", 1)).toBe("2027-01-01");
+  });
+
+  it("rolls backward across the year boundary", () => {
+    expect(addMonthsToKey("2026-01-15", -1)).toBe("2025-12-01");
+  });
+
+  it("steps several months within a year", () => {
+    expect(addMonthsToKey("2026-06-01", 3)).toBe("2026-09-01");
+  });
+});
+
+describe("weekdayMonIndex", () => {
+  it("maps Monday to 0 and Sunday to 6", () => {
+    // 2026-06-08 is a Monday, 2026-06-14 a Sunday.
+    expect(weekdayMonIndex("2026-06-08")).toBe(0);
+    expect(weekdayMonIndex("2026-06-14")).toBe(6);
+  });
+});
+
+describe("monthGridDays", () => {
+  const grid = monthGridDays("2026-06-13");
+
+  it("starts on a Monday and spans whole weeks", () => {
+    expect(weekdayMonIndex(grid[0])).toBe(0);
+    expect(grid.length % 7).toBe(0);
+  });
+
+  it("includes the first and last day of the month", () => {
+    expect(grid).toContain("2026-06-01");
+    expect(grid).toContain("2026-06-30");
+  });
+
+  it("pads to complete the final week", () => {
+    // June 2026 starts on a Monday, so the grid begins on Jun 1 itself
+    // and ends on Sun Jul 5 to complete the last week.
+    expect(grid[0]).toBe("2026-06-01");
+    expect(grid[grid.length - 1]).toBe("2026-07-05");
   });
 });

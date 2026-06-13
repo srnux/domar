@@ -12,6 +12,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Role, Skill } from '@prisma/client';
 import * as argon2 from 'argon2';
+import { Transform } from 'class-transformer';
 import {
   IsArray,
   IsEmail,
@@ -20,6 +21,7 @@ import {
   IsString,
   MinLength,
 } from 'class-validator';
+import { normalizeEmail } from '../auth/email.util';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -28,6 +30,7 @@ import { PrismaService } from '../prisma/prisma.service';
 const INVITE_TTL_MS = 7 * 24 * 3600_000;
 
 class CreateInviteDto {
+  @Transform(({ value }) => normalizeEmail(value))
   @IsEmail()
   email!: string;
 

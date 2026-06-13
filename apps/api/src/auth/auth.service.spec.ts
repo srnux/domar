@@ -102,6 +102,12 @@ describe('AuthService', () => {
       expect(prisma.refreshTokens[0].userId).toBe('user-1');
     });
 
+    it('matches the stored email case-insensitively', async () => {
+      const tokens = await service.login('Ana@Domar.test', 'Domar123!');
+
+      expect(jwt.verify(tokens.accessToken).sub).toBe('user-1');
+    });
+
     it('rejects a wrong password', async () => {
       await expect(
         service.login('ana@domar.test', 'wrong'),

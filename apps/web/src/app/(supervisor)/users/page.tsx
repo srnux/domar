@@ -14,6 +14,7 @@ import {
   PageHeader,
   PageSpinner,
   Select,
+  UserAvatar,
 } from "@/components/ui";
 
 export default function UsersPage() {
@@ -150,6 +151,7 @@ export default function UsersPage() {
                   u.isActive ? "" : "opacity-55"
                 }`}
               >
+                <UserAvatar user={u} size={40} />
                 <div className="min-w-0">
                   <p className="font-medium text-fg">{u.name}</p>
                   <p className="truncate text-sm text-muted">

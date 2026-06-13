@@ -18,8 +18,7 @@ function createFakePrisma() {
     refreshTokens,
     user: {
       findUnique: async ({ where }: any) =>
-        users.find((u) => u.email === where.email || u.id === where.id) ??
-        null,
+        users.find((u) => u.email === where.email || u.id === where.id) ?? null,
     },
     refreshToken: {
       create: async ({ data }: any) => {
@@ -40,7 +39,8 @@ function createFakePrisma() {
         const before = refreshTokens.length;
         for (let i = refreshTokens.length - 1; i >= 0; i--) {
           if (
-            (where.tokenHash && refreshTokens[i].tokenHash === where.tokenHash) ||
+            (where.tokenHash &&
+              refreshTokens[i].tokenHash === where.tokenHash) ||
             (where.userId && refreshTokens[i].userId === where.userId)
           ) {
             refreshTokens.splice(i, 1);
@@ -74,10 +74,7 @@ describe('AuthService', () => {
           signOptions: { expiresIn: '15m' },
         }),
       ],
-      providers: [
-        AuthService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [AuthService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     service = moduleRef.get(AuthService);

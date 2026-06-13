@@ -171,9 +171,7 @@ describe('Auth (e2e)', () => {
 
       // cleared cookies have empty values
       const cleared = cookiesOf(res);
-      expect(
-        cleared.some((c) => c.startsWith('access_token=;')),
-      ).toBe(true);
+      expect(cleared.some((c) => c.startsWith('access_token=;'))).toBe(true);
 
       await request(app.getHttpServer())
         .post('/api/auth/refresh')

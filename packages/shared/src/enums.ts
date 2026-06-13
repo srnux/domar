@@ -59,3 +59,9 @@ export const Skill = {
   GENERAL: 'GENERAL',
 } as const;
 export type Skill = (typeof Skill)[keyof typeof Skill];
+
+export const ActivityType = {
+  CREATED: 'CREATED',
+  STATUS_CHANGED: 'STATUS_CHANGED',
+} as const;
+export type ActivityType = (typeof ActivityType)[keyof typeof ActivityType];

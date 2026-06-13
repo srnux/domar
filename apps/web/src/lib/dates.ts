@@ -44,6 +44,11 @@ export function formatTimeRange(startIso: string, endIso: string): string {
   return `${timeFormat.format(new Date(startIso))} – ${timeFormat.format(new Date(endIso))}`;
 }
 
+/** "14:05" of the instant in the display timezone. */
+export function formatTime(iso: string): string {
+  return timeFormat.format(new Date(iso));
+}
+
 /** Readable heading for a "YYYY-MM-DD" day key, e.g. "Wed, 10 Jun". */
 export function formatDayHeading(dayKey: string): string {
   return headingFormat.format(new Date(`${dayKey}T12:00:00Z`));

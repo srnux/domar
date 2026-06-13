@@ -36,7 +36,10 @@ export function useCreateJob() {
         method: "POST",
         body: JSON.stringify(payload),
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["jobs"] }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      void queryClient.invalidateQueries({ queryKey: ["activity"] });
+    },
   });
 }
 
@@ -51,6 +54,7 @@ export function useTransitionJob(id: string) {
     onSuccess: (job) => {
       queryClient.setQueryData(["jobs", id], job);
       void queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      void queryClient.invalidateQueries({ queryKey: ["activity"] });
     },
   });
 }

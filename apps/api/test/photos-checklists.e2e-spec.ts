@@ -50,10 +50,32 @@ describe('Photos & Checklists (e2e)', () => {
     const passwordHash = await argon2.hash('Domar123!');
     await prisma.user.createMany({
       data: [
-        { email: 'ana@domar.test', passwordHash, name: 'Ana', role: 'SUPERVISOR' },
-        { email: 'marko@domar.test', passwordHash, name: 'Marko', role: 'WORKER', skills: ['CLEANING'] },
-        { email: 'petra@domar.test', passwordHash, name: 'Petra', role: 'WORKER', skills: ['CLEANING'] },
-        { email: 'klaus@domar.test', passwordHash, name: 'Klaus', role: 'OWNER' },
+        {
+          email: 'ana@domar.test',
+          passwordHash,
+          name: 'Ana',
+          role: 'SUPERVISOR',
+        },
+        {
+          email: 'marko@domar.test',
+          passwordHash,
+          name: 'Marko',
+          role: 'WORKER',
+          skills: ['CLEANING'],
+        },
+        {
+          email: 'petra@domar.test',
+          passwordHash,
+          name: 'Petra',
+          role: 'WORKER',
+          skills: ['CLEANING'],
+        },
+        {
+          email: 'klaus@domar.test',
+          passwordHash,
+          name: 'Klaus',
+          role: 'OWNER',
+        },
         { email: 'lena@domar.test', passwordHash, name: 'Lena', role: 'OWNER' },
       ],
     });
@@ -71,7 +93,11 @@ describe('Photos & Checklists (e2e)', () => {
             items: {
               create: [
                 { text: 'Vacuum all rooms', sortOrder: 0 },
-                { text: 'After photo of bathroom', photoRequired: true, sortOrder: 1 },
+                {
+                  text: 'After photo of bathroom',
+                  photoRequired: true,
+                  sortOrder: 1,
+                },
               ],
             },
           },
@@ -106,7 +132,8 @@ describe('Photos & Checklists (e2e)', () => {
     await app.close();
   });
 
-  const hours = (n: number) => new Date(Date.now() + n * 3600_000).toISOString();
+  const hours = (n: number) =>
+    new Date(Date.now() + n * 3600_000).toISOString();
 
   async function createAssignedCleaningJob(): Promise<{
     id: string;
@@ -152,10 +179,9 @@ describe('Photos & Checklists (e2e)', () => {
       const after = await asUser('ana@domar.test')
         .get(`/api/jobs/${job.id}`)
         .expect(200);
-      expect(after.body.checklistItems.map((i: { text: string }) => i.text)).toEqual([
-        'Vacuum all rooms',
-        'After photo of bathroom',
-      ]);
+      expect(
+        after.body.checklistItems.map((i: { text: string }) => i.text),
+      ).toEqual(['Vacuum all rooms', 'After photo of bathroom']);
 
       // restore the template for the rest of the suite
       await asUser('ana@domar.test')
@@ -311,13 +337,19 @@ describe('Photos & Checklists (e2e)', () => {
     });
 
     it('streams to the uploader and the property owner', async () => {
-      await asUser('marko@domar.test').get(`/api/photos/${photoId}`).expect(200);
-      await asUser('klaus@domar.test').get(`/api/photos/${photoId}`).expect(200);
+      await asUser('marko@domar.test')
+        .get(`/api/photos/${photoId}`)
+        .expect(200);
+      await asUser('klaus@domar.test')
+        .get(`/api/photos/${photoId}`)
+        .expect(200);
     });
 
     it('hides it from other owners and unassigned workers', async () => {
       await asUser('lena@domar.test').get(`/api/photos/${photoId}`).expect(404);
-      await asUser('petra@domar.test').get(`/api/photos/${photoId}`).expect(404);
+      await asUser('petra@domar.test')
+        .get(`/api/photos/${photoId}`)
+        .expect(404);
     });
 
     it('requires authentication', async () => {

@@ -94,7 +94,8 @@ export class InvitesController {
       },
     });
 
-    const baseUrl = this.config.get<string>('WEB_URL') ?? 'http://localhost:3002';
+    const baseUrl =
+      this.config.get<string>('WEB_URL') ?? 'http://localhost:3002';
     const inviteUrl = `${baseUrl}/invite/${token}`;
     // v1 has no SMTP — the supervisor copies the link; dev log for convenience
     this.logger.log(`Invite for ${dto.email}: ${inviteUrl}`);

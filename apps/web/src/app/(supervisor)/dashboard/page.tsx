@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { CalendarCheck, Plus } from "lucide-react";
 import { JobCard } from "@/components/JobCard";
+import { AttentionCard } from "@/components/AttentionCard";
+import { RecentActivityCard } from "@/components/RecentActivityCard";
+import { WorkerLoadCard } from "@/components/WorkerLoadCard";
 import { TodayAgenda } from "@/components/agenda/TodayAgenda";
 import {
   formatDayHeading,
@@ -40,7 +43,7 @@ export default function DashboardPage() {
   );
 
   return (
-    <main className="mx-auto max-w-3xl p-4">
+    <main className="mx-auto max-w-6xl p-4">
       <PageHeader
         title={t("weekAgenda")}
         action={
@@ -59,9 +62,9 @@ export default function DashboardPage() {
             <span className="dom-pulse" aria-hidden />
             {t("needsAttention", { count: needsAttention.length })}
           </h2>
-          <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {needsAttention.map((job) => (
-              <JobCard key={job.id} job={job} href={`/jobs/${job.id}`} />
+              <AttentionCard key={job.id} job={job} />
             ))}
           </div>
         </section>
@@ -69,6 +72,14 @@ export default function DashboardPage() {
 
       {isPending && <PageSpinner />}
       {!isPending && <TodayAgenda jobs={jobs ?? []} />}
+
+      {!isPending && (
+        <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <WorkerLoadCard jobs={jobs ?? []} />
+          <RecentActivityCard />
+        </div>
+      )}
+
       {!isPending && !hasTodayJobs && grouped.size === 0 && (
         <EmptyState
           icon={<CalendarCheck size={22} aria-hidden />}

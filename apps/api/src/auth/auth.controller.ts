@@ -30,9 +30,7 @@ function toSafeUser(user: User): SafeUser {
 }
 
 function refreshCookieOf(req: Request): string | undefined {
-  return (req.cookies as Record<string, string> | undefined)?.[
-    REFRESH_COOKIE
-  ];
+  return (req.cookies as Record<string, string> | undefined)?.[REFRESH_COOKIE];
 }
 
 @Controller('auth')

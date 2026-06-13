@@ -40,8 +40,18 @@ describe('Invites & User management (e2e)', () => {
     const passwordHash = await argon2.hash('Domar123!');
     await prisma.user.createMany({
       data: [
-        { email: 'ana@domar.test', passwordHash, name: 'Ana', role: 'SUPERVISOR' },
-        { email: 'marko@domar.test', passwordHash, name: 'Marko', role: 'WORKER' },
+        {
+          email: 'ana@domar.test',
+          passwordHash,
+          name: 'Ana',
+          role: 'SUPERVISOR',
+        },
+        {
+          email: 'marko@domar.test',
+          passwordHash,
+          name: 'Marko',
+          role: 'WORKER',
+        },
       ],
     });
 
@@ -69,7 +79,11 @@ describe('Invites & User management (e2e)', () => {
     it('supervisor invites a worker and gets a one-time link', async () => {
       const res = await asUser('ana@domar.test')
         .post('/api/invites')
-        .send({ email: 'novi@domar.test', role: 'WORKER', skills: ['CLEANING'] })
+        .send({
+          email: 'novi@domar.test',
+          role: 'WORKER',
+          skills: ['CLEANING'],
+        })
         .expect(201);
 
       expect(res.body.inviteUrl).toContain('/invite/');
@@ -79,7 +93,11 @@ describe('Invites & User management (e2e)', () => {
     it('the token can be inspected publicly and then consumed once', async () => {
       const invite = await asUser('ana@domar.test')
         .post('/api/invites')
-        .send({ email: 'petra2@domar.test', role: 'WORKER', skills: ['CLEANING'] })
+        .send({
+          email: 'petra2@domar.test',
+          role: 'WORKER',
+          skills: ['CLEANING'],
+        })
         .expect(201);
       const token = invite.body.token;
 
@@ -171,9 +189,7 @@ describe('Invites & User management (e2e)', () => {
         .get('/api/users?role=WORKER&includeInactive=true')
         .expect(200);
       expect(
-        all.body.some(
-          (u: { email: string }) => u.email === 'marko@domar.test',
-        ),
+        all.body.some((u: { email: string }) => u.email === 'marko@domar.test'),
       ).toBe(true);
 
       await asUser('ana@domar.test')
@@ -225,7 +241,9 @@ describe('Invites & User management (e2e)', () => {
         .get('/api/properties')
         .set('Cookie', jar)
         .expect(200);
-      expect(res.body.map((p: { name: string }) => p.name)).toEqual(['Villa K']);
+      expect(res.body.map((p: { name: string }) => p.name)).toEqual([
+        'Villa K',
+      ]);
 
       // and still cannot create
       await request(app.getHttpServer())

@@ -207,9 +207,9 @@ describe('job status machine', () => {
     });
 
     it('lists what the supervisor can do with a done job', () => {
-      expect(
-        availableTransitions(JobStatus.DONE, supervisor).sort(),
-      ).toEqual([JobStatus.ASSIGNED, JobStatus.VERIFIED].sort());
+      expect(availableTransitions(JobStatus.DONE, supervisor).sort()).toEqual(
+        [JobStatus.ASSIGNED, JobStatus.VERIFIED].sort(),
+      );
     });
 
     it('is empty for an owner', () => {

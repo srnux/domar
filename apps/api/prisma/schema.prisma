@@ -50,6 +50,11 @@ enum JobPriority {
   URGENT
 }
 
+enum ActivityType {
+  CREATED
+  STATUS_CHANGED
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -69,6 +74,7 @@ model User {
   createdJobs    Job[]          @relation("JobCreator")
   uploadedPhotos JobPhoto[]
   comments       JobComment[]
+  activityEvents ActivityEvent[]
 }
 
 model Property {
@@ -209,12 +215,29 @@ model Job {
   checklistItems ChecklistItem[]
   photos         JobPhoto[]
   comments       JobComment[]
+  activityEvents ActivityEvent[]
   booking        Booking?
 
   @@index([propertyId])
   @@index([assignedWorkerId, scheduledStart])
   @@index([status])
   @@index([scheduledStart])
+}
+
+model ActivityEvent {
+  id         String       @id @default(uuid())
+  jobId      String
+  job        Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  actorId    String?
+  actor      User?        @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  type       ActivityType
+  fromStatus JobStatus?
+  toStatus   JobStatus?
+  reason     String?
+  createdAt  DateTime     @default(now())
+
+  @@index([createdAt])
+  @@index([jobId, createdAt])
 }
 
 model Invite {

@@ -1,4 +1,4 @@
-import { JobStatus, PrismaClient, Role, Skill } from '@prisma/client';
+import { ActivityType, JobStatus, PrismaClient, Role, Skill } from '@prisma/client';
 import * as argon2 from 'argon2';
 
 const prisma = new PrismaClient();
@@ -9,6 +9,13 @@ function at(dayOffset: number, hour: number): Date {
   const d = new Date();
   d.setDate(d.getDate() + dayOffset);
   d.setHours(hour, 0, 0, 0);
+  return d;
+}
+
+function atMin(dayOffset: number, hour: number, minute: number): Date {
+  const d = new Date();
+  d.setDate(d.getDate() + dayOffset);
+  d.setHours(hour, minute, 0, 0);
   return d;
 }
 
@@ -193,6 +200,59 @@ async function main() {
     });
   }
 
+  if ((await prisma.activityEvent.count()) === 0) {
+    const jobs = await prisma.job.findMany();
+    const findJob = (propertyId: string, title: string, status: JobStatus) =>
+      jobs.find(
+        (j) =>
+          j.propertyId === propertyId &&
+          j.title === title &&
+          j.status === status,
+      );
+
+    const draftTurnover = findJob(poluotok.id, 'Turnover cleaning', JobStatus.DRAFT);
+    const borikTurnover = findJob(borik.id, 'Turnover cleaning — checkout 10h', JobStatus.ASSIGNED);
+    const acRemote = findJob(diklo.id, 'AC remote not pairing', JobStatus.IN_PROGRESS);
+    const declinedMixer = findJob(petrcane.id, 'Dripping shower mixer', JobStatus.DECLINED);
+    const donePoluotok = findJob(poluotok.id, 'Turnover cleaning', JobStatus.DONE);
+    const balconyRail = findJob(borik.id, 'Loose balcony rail', JobStatus.VERIFIED);
+    const tomorrowDiklo = findJob(diklo.id, 'Turnover cleaning', JobStatus.ASSIGNED);
+
+    const events = [
+      acRemote && {
+        jobId: acRemote.id, actorId: petra.id, type: ActivityType.STATUS_CHANGED,
+        fromStatus: JobStatus.ACCEPTED, toStatus: JobStatus.IN_PROGRESS, createdAt: atMin(0, 13, 5),
+      },
+      declinedMixer && {
+        jobId: declinedMixer.id, actorId: ivan.id, type: ActivityType.STATUS_CHANGED,
+        fromStatus: JobStatus.ASSIGNED, toStatus: JobStatus.DECLINED,
+        reason: 'On another job in Sukošan that day', createdAt: atMin(0, 11, 42),
+      },
+      borikTurnover && {
+        jobId: borikTurnover.id, actorId: marko.id, type: ActivityType.STATUS_CHANGED,
+        fromStatus: JobStatus.ASSIGNED, toStatus: JobStatus.ACCEPTED, createdAt: atMin(0, 8, 50),
+      },
+      donePoluotok && {
+        jobId: donePoluotok.id, actorId: marko.id, type: ActivityType.STATUS_CHANGED,
+        fromStatus: JobStatus.IN_PROGRESS, toStatus: JobStatus.DONE, createdAt: atMin(-1, 16, 40),
+      },
+      balconyRail && {
+        jobId: balconyRail.id, actorId: ana.id, type: ActivityType.STATUS_CHANGED,
+        fromStatus: JobStatus.DONE, toStatus: JobStatus.VERIFIED, createdAt: atMin(-2, 9, 15),
+      },
+      tomorrowDiklo && {
+        jobId: tomorrowDiklo.id, actorId: ana.id, type: ActivityType.CREATED,
+        toStatus: JobStatus.ASSIGNED, createdAt: atMin(-1, 8, 14),
+      },
+      draftTurnover && {
+        jobId: draftTurnover.id, actorId: ana.id, type: ActivityType.CREATED,
+        toStatus: JobStatus.DRAFT, createdAt: atMin(-1, 8, 2),
+      },
+    ].filter((e): e is NonNullable<typeof e> => Boolean(e));
+
+    await prisma.activityEvent.createMany({ data: events });
+  }
+
   if ((await prisma.booking.count()) === 0) {
     await prisma.booking.createMany({
       data: [
@@ -219,7 +279,7 @@ async function main() {
     });
   }
 
-  console.log(`Seeded: 7 users (password: ${PASSWORD}), 5 properties, ${await prisma.job.count()} jobs, ${await prisma.booking.count()} bookings`);
+  console.log(`Seeded: 7 users (password: ${PASSWORD}), 5 properties, ${await prisma.job.count()} jobs, ${await prisma.booking.count()} bookings, ${await prisma.activityEvent.count()} activity events`);
   console.log('Logins: ana@ (supervisor), marko@/ivan@/petra@ (workers), klaus@/lena@ (owners) — all @domar.test');
 }
 

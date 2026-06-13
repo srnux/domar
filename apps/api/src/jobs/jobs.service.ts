@@ -4,15 +4,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { JobStatus, Prisma, Role } from '@prisma/client';
+import { ActivityType, JobStatus, Prisma, Role } from '@prisma/client';
+import { ActivityService } from '../activity/activity.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AccessTokenPayload } from '../auth/auth.service';
 import { CreateJobDto } from './dto/create-job.dto';
 import { TransitionJobDto } from './dto/transition-job.dto';
-import {
-  availableTransitions,
-  canTransition,
-} from './job-status.machine';
+import { availableTransitions, canTransition } from './job-status.machine';
 
 const jobInclude = {
   property: {
@@ -53,7 +51,10 @@ type JobWithRelations = Prisma.JobGetPayload<{ include: typeof jobInclude }>;
 
 @Injectable()
 export class JobsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activity: ActivityService,
+  ) {}
 
   private toDto(job: JobWithRelations, actor: AccessTokenPayload) {
     const { propertyId: _p, assignedWorkerId, createdById: _c, ...rest } = job;
@@ -82,7 +83,9 @@ export class JobsService {
     const start = new Date(dto.scheduledStart);
     const end = new Date(dto.scheduledEnd);
     if (end <= start) {
-      throw new BadRequestException('scheduledEnd must be after scheduledStart');
+      throw new BadRequestException(
+        'scheduledEnd must be after scheduledStart',
+      );
     }
 
     const property = await this.prisma.property.findUnique({
@@ -128,6 +131,14 @@ export class JobsService {
       },
       include: jobInclude,
     });
+
+    await this.activity.record({
+      jobId: job.id,
+      actorId: actor.sub,
+      type: ActivityType.CREATED,
+      toStatus: job.status,
+    });
+
     return this.toDto(job, actor);
   }
 
@@ -149,7 +160,11 @@ export class JobsService {
     return this.toDto(job, actor);
   }
 
-  async transition(id: string, dto: TransitionJobDto, actor: AccessTokenPayload) {
+  async transition(
+    id: string,
+    dto: TransitionJobDto,
+    actor: AccessTokenPayload,
+  ) {
     const job = await this.prisma.job.findFirst({
       where: { AND: [{ id }, this.scopeFor(actor)] },
     });
@@ -190,6 +205,15 @@ export class JobsService {
       where: { id },
       data,
       include: jobInclude,
+    });
+
+    await this.activity.record({
+      jobId: id,
+      actorId: actor.sub,
+      type: ActivityType.STATUS_CHANGED,
+      fromStatus: job.status,
+      toStatus: dto.to,
+      reason: dto.reason,
     });
 
     // A reopen (done → assigned) lands in the thread so the worker sees why.

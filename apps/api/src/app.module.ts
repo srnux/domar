@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ActivityModule } from './activity/activity.module';
 import { AuthModule } from './auth/auth.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { ChecklistsModule } from './checklists/checklists.module';
@@ -25,6 +26,7 @@ import { UsersModule } from './users/users.module';
     CommentsModule,
     BookingsModule,
     InvitesModule,
+    ActivityModule,
   ],
   controllers: [HealthController],
 })

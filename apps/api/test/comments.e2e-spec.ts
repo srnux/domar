@@ -44,10 +44,30 @@ describe('Comments & Verification (e2e)', () => {
     const passwordHash = await argon2.hash('Domar123!');
     await prisma.user.createMany({
       data: [
-        { email: 'ana@domar.test', passwordHash, name: 'Ana', role: 'SUPERVISOR' },
-        { email: 'marko@domar.test', passwordHash, name: 'Marko', role: 'WORKER' },
-        { email: 'petra@domar.test', passwordHash, name: 'Petra', role: 'WORKER' },
-        { email: 'klaus@domar.test', passwordHash, name: 'Klaus', role: 'OWNER' },
+        {
+          email: 'ana@domar.test',
+          passwordHash,
+          name: 'Ana',
+          role: 'SUPERVISOR',
+        },
+        {
+          email: 'marko@domar.test',
+          passwordHash,
+          name: 'Marko',
+          role: 'WORKER',
+        },
+        {
+          email: 'petra@domar.test',
+          passwordHash,
+          name: 'Petra',
+          role: 'WORKER',
+        },
+        {
+          email: 'klaus@domar.test',
+          passwordHash,
+          name: 'Klaus',
+          role: 'OWNER',
+        },
         { email: 'lena@domar.test', passwordHash, name: 'Lena', role: 'OWNER' },
       ],
     });
@@ -84,7 +104,8 @@ describe('Comments & Verification (e2e)', () => {
     await app.close();
   });
 
-  const hours = (n: number) => new Date(Date.now() + n * 3600_000).toISOString();
+  const hours = (n: number) =>
+    new Date(Date.now() + n * 3600_000).toISOString();
 
   async function createJob(): Promise<string> {
     const res = await asUser('ana@domar.test')
@@ -116,7 +137,10 @@ describe('Comments & Verification (e2e)', () => {
       const jobId = await createJob();
       const res = await asUser('klaus@domar.test')
         .post(`/api/jobs/${jobId}/comments`)
-        .send({ body: 'Please be careful with the new sofa', visibility: 'INTERNAL' })
+        .send({
+          body: 'Please be careful with the new sofa',
+          visibility: 'INTERNAL',
+        })
         .expect(201);
       expect(res.body.visibility).toBe('SHARED');
     });

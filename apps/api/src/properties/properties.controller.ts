@@ -16,7 +16,10 @@ import type { AuthenticatedRequest } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreatePropertyDto, UpdatePropertyDto } from './dto/create-property.dto';
+import {
+  CreatePropertyDto,
+  UpdatePropertyDto,
+} from './dto/create-property.dto';
 
 @Controller('properties')
 @UseGuards(JwtAuthGuard, RolesGuard)

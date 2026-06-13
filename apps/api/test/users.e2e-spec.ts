@@ -26,10 +26,32 @@ describe('Users (e2e)', () => {
     const passwordHash = await argon2.hash('Domar123!');
     await prisma.user.createMany({
       data: [
-        { email: 'ana@domar.test', passwordHash, name: 'Ana', role: 'SUPERVISOR' },
-        { email: 'marko@domar.test', passwordHash, name: 'Marko', role: 'WORKER', skills: ['CLEANING'] },
-        { email: 'inactive@domar.test', passwordHash, name: 'Gone', role: 'WORKER', isActive: false },
-        { email: 'klaus@domar.test', passwordHash, name: 'Klaus', role: 'OWNER' },
+        {
+          email: 'ana@domar.test',
+          passwordHash,
+          name: 'Ana',
+          role: 'SUPERVISOR',
+        },
+        {
+          email: 'marko@domar.test',
+          passwordHash,
+          name: 'Marko',
+          role: 'WORKER',
+          skills: ['CLEANING'],
+        },
+        {
+          email: 'inactive@domar.test',
+          passwordHash,
+          name: 'Gone',
+          role: 'WORKER',
+          isActive: false,
+        },
+        {
+          email: 'klaus@domar.test',
+          passwordHash,
+          name: 'Klaus',
+          role: 'OWNER',
+        },
       ],
     });
 

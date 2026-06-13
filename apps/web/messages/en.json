@@ -60,6 +60,9 @@
     "todayAgenda": "Today's agenda",
     "agendaSummary": "· {jobs, plural, one {# job} other {# jobs}} across {workers, plural, one {# worker} other {# workers}}",
     "openFullSchedule": "Open full schedule →",
+    "workerLoad": "Worker load",
+    "todaySuffix": "· today",
+    "teamLink": "Team →",
     "workerLabel": "Worker",
     "now": "Now",
     "signOut": "Sign out",
@@ -88,6 +91,8 @@
     "reassignTo": "Reassign to",
     "selectWorker": "Select a worker…",
     "assign": "Assign",
+    "reassign": "Reassign",
+    "cancel": "Cancel",
     "verify": "Verify work",
     "verifyQueue": "To verify",
     "verifyQueueHint": "Finished jobs waiting for your review.",
@@ -101,6 +106,23 @@
     "reopenReason": "What needs to be redone?",
     "confirmReopen": "Reopen job",
     "cancelJob": "Cancel job"
+  },
+  "activity": {
+    "title": "Recent activity",
+    "todaySuffix": "· today",
+    "auditLog": "Audit log →",
+    "empty": "No activity yet.",
+    "system": "System",
+    "verb": {
+      "created": "created",
+      "assigned": "assigned",
+      "accepted": "accepted",
+      "declined": "declined",
+      "started": "started",
+      "finished": "finished",
+      "verified": "verified",
+      "cancelled": "cancelled"
+    }
   },
   "bookings": {
     "title": "Bookings",
@@ -175,6 +197,8 @@
     "noOwner": "No owner linked",
     "cleaningChecklist": "Cleaning checklist template",
     "addItem": "Add item",
+    "photoRequired": "Photo required",
+    "remove": "Remove",
     "active": "Active",
     "saving": "Saving…",
     "save": "Save"

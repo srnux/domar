@@ -34,6 +34,7 @@
   "worker": {
     "myDay": "My Day",
     "myWeek": "My Week",
+    "signOut": "Sign out",
     "today": "Today",
     "greeting": "Hi {name}, here are your jobs.",
     "needsResponse": "{count, plural, one {# new assignment needs your response} other {# new assignments need your response}}",

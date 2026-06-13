@@ -181,9 +181,18 @@
     "copied": "Copied!",
     "deactivate": "Deactivate",
     "reactivate": "Reactivate",
+    "ratings": "{count, plural, one {# rating} other {# ratings}}",
+    "notRated": "Not yet rated",
     "SUPERVISOR": "Supervisors",
     "WORKER": "Workers",
     "OWNER": "Owners"
+  },
+  "rating": {
+    "title": "Rate this work",
+    "placeholder": "Add a note for the team (optional)",
+    "submit": "Submit rating",
+    "update": "Update rating",
+    "saved": "Rating saved"
   },
   "profile": {
     "title": "Profile",

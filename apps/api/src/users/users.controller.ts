@@ -63,14 +63,34 @@ export class UsersController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Get()
-  list(@Query() query: ListUsersQuery) {
-    return this.prisma.user.findMany({
+  async list(@Query() query: ListUsersQuery) {
+    const users = await this.prisma.user.findMany({
       where: {
         ...(query.includeInactive === 'true' ? {} : { isActive: true }),
         ...(query.role ? { role: query.role } : {}),
       },
       orderBy: { name: 'asc' },
       omit: { passwordHash: true },
+    });
+
+    // Per-worker rating aggregate, surfaced on the supervisor workers page.
+    const aggregates = await this.prisma.jobRating.groupBy({
+      by: ['workerId'],
+      _avg: { score: true },
+      _count: { _all: true },
+    });
+    const byWorker = new Map(aggregates.map((a) => [a.workerId, a]));
+
+    return users.map((user) => {
+      const agg = byWorker.get(user.id);
+      return {
+        ...user,
+        avgScore:
+          agg?._avg.score != null
+            ? Math.round(agg._avg.score * 10) / 10
+            : null,
+        ratingCount: agg?._count._all ?? 0,
+      };
     });
   }
 

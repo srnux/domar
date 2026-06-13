@@ -11,6 +11,7 @@ import { JobsModule } from './jobs/jobs.module';
 import { PhotosModule } from './photos/photos.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PropertiesModule } from './properties/properties.module';
+import { RatingsModule } from './ratings/ratings.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -24,6 +25,7 @@ import { UsersModule } from './users/users.module';
     ChecklistsModule,
     PhotosModule,
     CommentsModule,
+    RatingsModule,
     BookingsModule,
     InvitesModule,
     ActivityModule,

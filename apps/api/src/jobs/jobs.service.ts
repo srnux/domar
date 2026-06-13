@@ -45,6 +45,7 @@ const jobInclude = {
       createdAt: true,
     },
   },
+  rating: { select: { score: true, comment: true } },
 } satisfies Prisma.JobInclude;
 
 type JobWithRelations = Prisma.JobGetPayload<{ include: typeof jobInclude }>;

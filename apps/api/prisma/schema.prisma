@@ -76,6 +76,8 @@ model User {
   uploadedPhotos JobPhoto[]
   comments       JobComment[]
   activityEvents ActivityEvent[]
+  ratingsReceived JobRating[]   @relation("RatingsReceived")
+  ratingsGiven    JobRating[]   @relation("RatingsGiven")
 }
 
 model Property {
@@ -159,6 +161,24 @@ model JobComment {
   @@index([jobId, createdAt])
 }
 
+model JobRating {
+  id        String   @id @default(uuid())
+  jobId     String   @unique
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  /// Denormalized for fast per-worker aggregation on the supervisor view.
+  workerId  String
+  worker    User     @relation("RatingsReceived", fields: [workerId], references: [id], onDelete: Cascade)
+  /// The owner who gave the rating.
+  ratedById String
+  ratedBy   User     @relation("RatingsGiven", fields: [ratedById], references: [id], onDelete: Cascade)
+  score     Int // 1–5, validated in the DTO
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workerId])
+}
+
 model ChecklistItem {
   id            String  @id @default(uuid())
   jobId         String
@@ -218,6 +238,7 @@ model Job {
   comments       JobComment[]
   activityEvents ActivityEvent[]
   booking        Booking?
+  rating         JobRating?
 
   @@index([propertyId])
   @@index([assignedWorkerId, scheduledStart])

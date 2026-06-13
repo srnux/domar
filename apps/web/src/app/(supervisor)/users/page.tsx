@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Role, Skill } from "@domar/shared";
 import { Check, Copy, Mail } from "lucide-react";
+import { StarDisplay } from "@/components/StarRating";
 import { useMe } from "@/lib/auth";
 import { useCreateInvite, useUpdateUser, useUsers } from "@/lib/users";
 import {
@@ -156,6 +157,22 @@ export default function UsersPage() {
                     {u.skills.length > 0 &&
                       ` · ${u.skills.map((s) => tj(s as never)).join(", ")}`}
                   </p>
+                  {r === "WORKER" &&
+                    (u.ratingCount > 0 ? (
+                      <span className="mt-1 flex items-center gap-1.5 text-sm">
+                        <StarDisplay value={u.avgScore ?? 0} />
+                        <span className="font-medium tabular-nums text-fg-soft">
+                          {u.avgScore?.toFixed(1)}
+                        </span>
+                        <span className="text-subtle">
+                          {t("ratings", { count: u.ratingCount })}
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="mt-1 block text-sm text-subtle">
+                        {t("notRated")}
+                      </span>
+                    ))}
                 </div>
                 {u.id !== me?.id && (
                   <button

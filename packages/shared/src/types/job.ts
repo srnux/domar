@@ -15,6 +15,12 @@ export interface JobWorkerDto {
   name: string;
 }
 
+export interface JobRatingDto {
+  /** 1–5 stars. */
+  score: number;
+  comment: string | null;
+}
+
 export interface JobDto {
   id: string;
   property: JobPropertyDto;
@@ -32,8 +38,16 @@ export interface JobDto {
   allowedTransitions: JobStatus[];
   checklistItems: ChecklistItemDto[];
   photos: JobPhotoDto[];
+  /** Owner's rating of the finished work, once given. */
+  rating: JobRatingDto | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface RateJobPayload {
+  /** 1–5 stars. */
+  score: number;
+  comment?: string;
 }
 
 export interface CreateJobPayload {

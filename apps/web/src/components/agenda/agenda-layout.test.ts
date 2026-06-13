@@ -51,6 +51,7 @@ function job(overrides: {
     allowedTransitions: [],
     checklistItems: [],
     photos: [],
+    rating: null,
     createdAt: toIso("07:00"),
     updatedAt: toIso("07:00"),
   };
@@ -67,6 +68,8 @@ const workers: UserDto[] = [
     locale: "en",
     isActive: true,
     avatarFilename: null,
+    avgScore: null,
+    ratingCount: 0,
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
   },

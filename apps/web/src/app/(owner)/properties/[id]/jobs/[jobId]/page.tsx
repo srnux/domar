@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, ImageIcon } from "lucide-react";
 import { CommentThread } from "@/components/CommentThread";
+import { RatingCard } from "@/components/RatingCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { JobTypeIcon } from "@/components/JobTypeIcon";
 import { formatDayHeading, formatTimeRange, localDayKey } from "@/lib/dates";
@@ -75,6 +76,11 @@ export default function OwnerJobPage({
           </div>
         </Card>
       )}
+
+      {(job.status === "DONE" || job.status === "VERIFIED") &&
+        job.assignedWorker && (
+          <RatingCard jobId={job.id} rating={job.rating} />
+        )}
 
       <CommentThread jobId={job.id} canChooseVisibility={false} />
     </main>

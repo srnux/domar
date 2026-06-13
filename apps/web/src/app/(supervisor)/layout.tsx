@@ -17,6 +17,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { RequireRole } from "@/components/RequireRole";
+import { UserMenu } from "@/components/UserMenu";
 import { useLogout } from "@/lib/auth";
 import { Brand } from "@/components/ui";
 
@@ -104,6 +105,8 @@ export default function SupervisorLayout({
             >
               {open ? <X size={18} /> : <Menu size={18} />}
             </button>
+
+            <UserMenu />
           </div>
 
           {/* Mobile drawer */}

@@ -185,6 +185,20 @@
     "WORKER": "Workers",
     "OWNER": "Owners"
   },
+  "profile": {
+    "title": "Profile",
+    "back": "Back",
+    "changePhoto": "Change photo",
+    "addPhoto": "Add photo",
+    "uploading": "Uploading…",
+    "photoHint": "JPEG, PNG or WebP.",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "SUPERVISOR": "Supervisor",
+    "WORKER": "Worker",
+    "OWNER": "Owner"
+  },
   "properties": {
     "title": "Properties",
     "add": "Add property",

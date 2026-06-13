@@ -9,3 +9,4 @@ export { Spinner, PageSpinner } from "./Spinner";
 export { EmptyState } from "./EmptyState";
 export { PageHeader } from "./PageHeader";
 export { Brand, BrandMark } from "./Brand";
+export { UserAvatar } from "./UserAvatar";

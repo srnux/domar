@@ -18,5 +18,6 @@ import { StoragePort } from './storage/storage.port';
         new LocalDiskStorage(config.get<string>('UPLOADS_DIR') ?? './uploads'),
     },
   ],
+  exports: [StoragePort],
 })
 export class PhotosModule {}

@@ -10,6 +10,7 @@ export interface UserDto {
   skills: Skill[];
   locale: string;
   isActive: boolean;
+  avatarFilename: string | null;
   createdAt: string;
   updatedAt: string;
 }

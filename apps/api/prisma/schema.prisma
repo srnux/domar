@@ -56,22 +56,23 @@ enum ActivityType {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  name         String
-  phone        String?
-  role         Role
-  skills       Skill[]  @default([])
-  locale       String   @default("en")
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String   @id @default(uuid())
+  email          String   @unique
+  passwordHash   String
+  name           String
+  phone          String?
+  role           Role
+  skills         Skill[]  @default([])
+  locale         String   @default("en")
+  isActive       Boolean  @default(true)
+  avatarFilename String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   refreshTokens  RefreshToken[]
-  properties     Property[]     @relation("PropertyOwner")
-  assignedJobs   Job[]          @relation("JobWorker")
-  createdJobs    Job[]          @relation("JobCreator")
+  properties     Property[]      @relation("PropertyOwner")
+  assignedJobs   Job[]           @relation("JobWorker")
+  createdJobs    Job[]           @relation("JobCreator")
   uploadedPhotos JobPhoto[]
   comments       JobComment[]
   activityEvents ActivityEvent[]
@@ -98,20 +99,20 @@ model Property {
 }
 
 model ChecklistTemplate {
-  id         String   @id @default(uuid())
-  propertyId String   @unique
-  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  id         String                  @id @default(uuid())
+  propertyId String                  @unique
+  property   Property                @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   items      ChecklistTemplateItem[]
-  updatedAt  DateTime @updatedAt
+  updatedAt  DateTime                @updatedAt
 }
 
 model ChecklistTemplateItem {
-  id            String  @id @default(uuid())
+  id            String            @id @default(uuid())
   templateId    String
   template      ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
   text          String
-  photoRequired Boolean @default(false)
-  sortOrder     Int     @default(0)
+  photoRequired Boolean           @default(false)
+  sortOrder     Int               @default(0)
 
   @@index([templateId])
 }
@@ -128,19 +129,19 @@ enum CommentVisibility {
 }
 
 model Booking {
-  id            String   @id @default(uuid())
+  id            String    @id @default(uuid())
   propertyId    String
-  property      Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  property      Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   /// When the current guest leaves (start of the turnover window).
   checkoutAt    DateTime
   /// When the next guest arrives, if known.
   checkinAt     DateTime?
   guestNote     String?
   /// The turnover cleaning created for this gap, once the supervisor acts.
-  turnoverJobId String?  @unique
-  turnoverJob   Job?     @relation(fields: [turnoverJobId], references: [id], onDelete: SetNull)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  turnoverJobId String?   @unique
+  turnoverJob   Job?      @relation(fields: [turnoverJobId], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([propertyId, checkoutAt])
 }
@@ -173,20 +174,20 @@ model ChecklistItem {
 }
 
 model JobPhoto {
-  id              String     @id @default(uuid())
+  id              String         @id @default(uuid())
   jobId           String
-  job             Job        @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  job             Job            @relation(fields: [jobId], references: [id], onDelete: Cascade)
   kind            PhotoKind
   /// Randomized stored filename (uuid + extension), never client-supplied.
-  filename        String     @unique
+  filename        String         @unique
   mimeType        String
   sizeBytes       Int
   caption         String?
   uploadedById    String?
-  uploadedBy      User?      @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  uploadedBy      User?          @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
   checklistItemId String?
   checklistItem   ChecklistItem? @relation(fields: [checklistItemId], references: [id], onDelete: SetNull)
-  createdAt       DateTime   @default(now())
+  createdAt       DateTime       @default(now())
 
   @@index([jobId])
 }

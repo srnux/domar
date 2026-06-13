@@ -7,6 +7,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { ApiError, api } from "./api-client";
+import { resizeImage } from "./image-resize";
 
 export function useUsers(options: { role?: Role; includeInactive?: boolean }) {
   const params = new URLSearchParams();
@@ -43,5 +44,25 @@ export function useUpdateUser() {
         body: JSON.stringify(payload),
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["users"] }),
+  });
+}
+
+/** Upload/replace the signed-in user's own avatar. */
+export function useUpdateAvatar() {
+  const queryClient = useQueryClient();
+  return useMutation<UserDto, ApiError, File>({
+    mutationFn: async (file) => {
+      const resized = await resizeImage(file);
+      const form = new FormData();
+      form.append("file", resized, "avatar.jpg");
+      return api<UserDto>("/api/users/me/avatar", {
+        method: "PUT",
+        body: form,
+      });
+    },
+    onSuccess: (user) => {
+      queryClient.setQueryData(["me"], user);
+      void queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
   });
 }

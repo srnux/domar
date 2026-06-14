@@ -73,6 +73,7 @@
     "now": "Now",
     "signOut": "Sign out",
     "greeting": "Welcome back, {name}.",
+    "jobs": "Jobs",
     "newJob": "New job",
     "needsAttention": "{count, plural, one {# job needs attention} other {# jobs need attention}}",
     "noJobs": "No active jobs — create one.",

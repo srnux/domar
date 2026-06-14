@@ -6,12 +6,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   BadgeCheck,
+  Briefcase,
   CalendarRange,
   Home,
   LayoutDashboard,
   LogOut,
   Menu,
-  Plus,
   Users,
   X,
   type LucideIcon,
@@ -25,7 +25,7 @@ interface NavItem {
   href: string;
   key:
     | "dashboard"
-    | "newJob"
+    | "jobs"
     | "verifyQueue"
     | "bookings"
     | "properties"
@@ -35,7 +35,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
-  { href: "/jobs/new", key: "newJob", icon: Plus },
+  { href: "/jobs", key: "jobs", icon: Briefcase },
   { href: "/verify", key: "verifyQueue", icon: BadgeCheck },
   { href: "/bookings", key: "bookings", icon: CalendarRange },
   { href: "/manage/properties", key: "properties", icon: Home },

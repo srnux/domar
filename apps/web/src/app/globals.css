@@ -218,6 +218,32 @@ body {
   }
 }
 
+/* Status-coloured text — mirror dom-pill's text colour for labels/headings. */
+.dom-status-fg.draft {
+  color: var(--color-muted);
+}
+.dom-status-fg.assigned {
+  color: var(--color-st-assigned);
+}
+.dom-status-fg.accepted {
+  color: var(--color-st-accepted);
+}
+.dom-status-fg.progress {
+  color: var(--color-st-progress);
+}
+.dom-status-fg.declined {
+  color: var(--color-st-declined);
+}
+.dom-status-fg.done {
+  color: var(--color-st-done);
+}
+.dom-status-fg.verified {
+  color: var(--color-st-verified);
+}
+.dom-status-fg.cancelled {
+  color: var(--color-subtle);
+}
+
 /* ============================================================
    Card
    ============================================================ */

@@ -106,6 +106,13 @@ body {
   background: var(--color-accent-soft);
 }
 
+/* Buttons use the hand cursor on hover (Tailwind/preflight resets it to default) */
+:where(button, [role="button"], [type="button"], [type="submit"], [type="reset"]):not(
+    :disabled
+  ):hover {
+  cursor: pointer;
+}
+
 /* A consistent, visible focus ring everywhere */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--color-accent);

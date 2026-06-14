@@ -1,0 +1,5 @@
+-- AlterEnum
+ALTER TYPE "JobType" ADD VALUE 'GARDENING';
+
+-- AlterEnum
+ALTER TYPE "Skill" ADD VALUE 'GARDENING';

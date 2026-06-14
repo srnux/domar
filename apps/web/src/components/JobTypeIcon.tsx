@@ -3,6 +3,7 @@ import {
   ClipboardCheck,
   Droplets,
   Sparkles,
+  Sprout,
   Wrench,
   Zap,
   type LucideIcon,
@@ -13,6 +14,7 @@ const ICONS: Record<JobType, LucideIcon> = {
   REPAIR: Wrench,
   ELECTRICAL: Zap,
   PLUMBING: Droplets,
+  GARDENING: Sprout,
   INSPECTION: ClipboardCheck,
   OTHER: Wrench,
 };

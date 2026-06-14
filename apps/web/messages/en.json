@@ -27,6 +27,7 @@
     "REPAIR": "Repair",
     "ELECTRICAL": "Electrical",
     "PLUMBING": "Plumbing",
+    "GARDENING": "Gardening",
     "INSPECTION": "Inspection",
     "OTHER": "Other",
     "GENERAL": "General"
@@ -186,6 +187,9 @@
     "copied": "Copied!",
     "deactivate": "Deactivate",
     "reactivate": "Reactivate",
+    "changeSkills": "Change skills",
+    "save": "Save",
+    "cancel": "Cancel",
     "ratings": "{count, plural, one {# rating} other {# ratings}}",
     "notRated": "Not yet rated",
     "SUPERVISOR": "Supervisors",

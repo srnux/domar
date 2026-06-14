@@ -10,6 +10,7 @@ export const JobType = {
   REPAIR: 'REPAIR',
   ELECTRICAL: 'ELECTRICAL',
   PLUMBING: 'PLUMBING',
+  GARDENING: 'GARDENING',
   INSPECTION: 'INSPECTION',
   OTHER: 'OTHER',
 } as const;
@@ -71,6 +72,7 @@ export const Skill = {
   REPAIR: 'REPAIR',
   ELECTRICAL: 'ELECTRICAL',
   PLUMBING: 'PLUMBING',
+  GARDENING: 'GARDENING',
   GENERAL: 'GENERAL',
 } as const;
 export type Skill = (typeof Skill)[keyof typeof Skill];

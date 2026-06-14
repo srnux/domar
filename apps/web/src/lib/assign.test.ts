@@ -21,6 +21,11 @@ describe("workerMatchesJobType", () => {
     expect(workerMatchesJobType(worker([]), "OTHER")).toBe(true);
   });
 
+  it("gardening jobs require the gardening skill", () => {
+    expect(workerMatchesJobType(worker(["GARDENING"]), "GARDENING")).toBe(true);
+    expect(workerMatchesJobType(worker(["GENERAL"]), "GARDENING")).toBe(false);
+  });
+
   it("electrical and plumbing require the exact skill", () => {
     expect(workerMatchesJobType(worker(["GENERAL"]), "ELECTRICAL")).toBe(false);
     expect(workerMatchesJobType(worker(["ELECTRICAL"]), "ELECTRICAL")).toBe(true);

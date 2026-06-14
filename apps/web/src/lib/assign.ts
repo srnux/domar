@@ -6,6 +6,7 @@ const REQUIRED_SKILLS: Record<JobType, Skill[] | null> = {
   REPAIR: ["REPAIR", "GENERAL"],
   ELECTRICAL: ["ELECTRICAL"],
   PLUMBING: ["PLUMBING"],
+  GARDENING: ["GARDENING"],
   INSPECTION: null,
   OTHER: null,
 };

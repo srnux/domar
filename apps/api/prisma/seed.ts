@@ -37,7 +37,7 @@ async function main() {
 
   const ana = await upsertUser('ana@domar.test', 'Ana Supervizor', 'SUPERVISOR');
   const marko = await upsertUser('marko@domar.test', 'Marko Radnik', 'WORKER', ['CLEANING']);
-  const ivan = await upsertUser('ivan@domar.test', 'Ivan Majstor', 'WORKER', ['REPAIR', 'PLUMBING']);
+  const ivan = await upsertUser('ivan@domar.test', 'Ivan Majstor', 'WORKER', ['REPAIR', 'PLUMBING', 'GARDENING']);
   const petra = await upsertUser('petra@domar.test', 'Petra Struja', 'WORKER', ['CLEANING', 'ELECTRICAL']);
   await upsertUser('zoran@domar.test', 'Zoran Bivši', 'WORKER', ['CLEANING'], false);
   const klaus = await upsertUser('klaus@domar.test', 'Klaus Eigentümer', 'OWNER');
@@ -190,6 +190,12 @@ async function main() {
           status: JobStatus.CANCELLED, statusReason: 'Owner did it herself',
           scheduledStart: at(-2, 11), scheduledEnd: at(-2, 12), createdById: ana.id,
         },
+        // gardening — assigned to ivan (the gardener)
+        {
+          propertyId: borik.id, type: 'GARDENING', title: 'Trim hedges and mow lawn',
+          status: JobStatus.ASSIGNED, assignedWorkerId: ivan.id,
+          scheduledStart: at(2, 8), scheduledEnd: at(2, 11), createdById: ana.id,
+        },
         // tomorrow — second job for marko (conflict-hint demo later)
         {
           propertyId: diklo.id, type: 'CLEANING', title: 'Turnover cleaning',
@@ -285,6 +291,39 @@ async function main() {
     await prisma.activityEvent.createMany({ data: events });
   }
 
+  if ((await prisma.jobRating.count()) === 0) {
+    const jobs = await prisma.job.findMany();
+    const findJob = (propertyId: string, title: string, status: JobStatus) =>
+      jobs.find(
+        (j) =>
+          j.propertyId === propertyId &&
+          j.title === title &&
+          j.status === status,
+      );
+
+    // Owners rate the workers on their finished jobs.
+    const balconyRail = findJob(borik.id, 'Loose balcony rail', JobStatus.VERIFIED); // ivan, owner klaus
+    const petrcaneClean = findJob(petrcane.id, 'Turnover cleaning', JobStatus.VERIFIED); // marko, owner lena
+    const donePoluotok = findJob(poluotok.id, 'Turnover cleaning', JobStatus.DONE); // marko, owner klaus
+
+    const ratings = [
+      balconyRail && {
+        jobId: balconyRail.id, workerId: ivan.id, ratedById: klaus.id,
+        score: 5, comment: 'Quick and tidy.',
+      },
+      petrcaneClean && {
+        jobId: petrcaneClean.id, workerId: marko.id, ratedById: lena.id,
+        score: 4, comment: 'Good turnover.',
+      },
+      donePoluotok && {
+        jobId: donePoluotok.id, workerId: marko.id, ratedById: klaus.id,
+        score: 5,
+      },
+    ].filter((r): r is NonNullable<typeof r> => Boolean(r));
+
+    await prisma.jobRating.createMany({ data: ratings });
+  }
+
   if ((await prisma.booking.count()) === 0) {
     await prisma.booking.createMany({
       data: [
@@ -311,7 +350,7 @@ async function main() {
     });
   }
 
-  console.log(`Seeded: 7 users (password: ${PASSWORD}), 5 properties, ${await prisma.job.count()} jobs, ${await prisma.bid.count()} bids, ${await prisma.booking.count()} bookings, ${await prisma.activityEvent.count()} activity events`);
+  console.log(`Seeded: 7 users (password: ${PASSWORD}), 5 properties, ${await prisma.job.count()} jobs, ${await prisma.bid.count()} bids, ${await prisma.booking.count()} bookings, ${await prisma.activityEvent.count()} activity events, ${await prisma.jobRating.count()} ratings`);
   console.log('Logins: ana@ (supervisor), marko@/ivan@/petra@ (workers), klaus@/lena@ (owners) — all @domar.test');
 }
 

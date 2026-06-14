@@ -1,9 +1,10 @@
 "use client";
 
 import { use, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, BadgeCheck, UserPlus } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Pencil, UserPlus } from "lucide-react";
 import { BidsPanel } from "@/components/BidsPanel";
 import { CommentThread } from "@/components/CommentThread";
 import { JobChecklist } from "@/components/JobChecklist";
@@ -75,7 +76,17 @@ export default function SupervisorJobPage({
             </span>
             <PriceTypeBadge job={job} />
           </span>
-          <StatusBadge status={job.status} />
+          <span className="flex items-center gap-3">
+            {job.status === "DRAFT" && (
+              <Link
+                href={`/jobs/${job.id}/edit`}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-fg"
+              >
+                <Pencil size={14} aria-hidden /> {t("editJob")}
+              </Link>
+            )}
+            <StatusBadge status={job.status} />
+          </span>
         </div>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">
           {job.title}

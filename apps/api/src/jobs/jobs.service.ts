@@ -174,7 +174,10 @@ export class JobsService {
     return this.toDto(job, actor);
   }
 
-  /** Supervisor edits to a job's pricing, allowed only before work starts. */
+  /**
+   * Supervisor edits. Pricing may change while the job is DRAFT or ASSIGNED;
+   * the remaining fields may change only while it's still a DRAFT (no work yet).
+   */
   async update(id: string, dto: UpdateJobDto, actor: AccessTokenPayload) {
     const job = await this.prisma.job.findFirst({
       where: { AND: [{ id }, this.scopeFor(actor)] },
@@ -182,26 +185,116 @@ export class JobsService {
     });
     if (!job) throw new NotFoundException();
 
-    if (!PRICE_EDITABLE_STATUSES.includes(job.status)) {
+    const editsContent =
+      dto.propertyId !== undefined ||
+      dto.type !== undefined ||
+      dto.title !== undefined ||
+      dto.description !== undefined ||
+      dto.scheduledStart !== undefined ||
+      dto.scheduledEnd !== undefined ||
+      dto.assignedWorkerId !== undefined ||
+      dto.priority !== undefined;
+
+    if (editsContent) {
+      if (job.status !== JobStatus.DRAFT) {
+        throw new BadRequestException('Only draft jobs can be edited');
+      }
+    } else if (!PRICE_EDITABLE_STATUSES.includes(job.status)) {
       throw new BadRequestException(
         'Price can only be changed while the job is DRAFT or ASSIGNED',
       );
+    }
+
+    const data: Prisma.JobUpdateInput = {};
+
+    if (editsContent) {
+      const start = new Date(dto.scheduledStart ?? job.scheduledStart);
+      const end = new Date(dto.scheduledEnd ?? job.scheduledEnd);
+      if (end <= start) {
+        throw new BadRequestException(
+          'scheduledEnd must be after scheduledStart',
+        );
+      }
+
+      const propertyId = dto.propertyId ?? job.propertyId;
+      if (dto.propertyId !== undefined && dto.propertyId !== job.propertyId) {
+        const property = await this.prisma.property.findUnique({
+          where: { id: dto.propertyId },
+        });
+        if (!property || !property.isActive) {
+          throw new BadRequestException('Unknown or inactive property');
+        }
+      }
+
+      if (dto.assignedWorkerId) {
+        await this.assertActiveWorker(dto.assignedWorkerId);
+      }
+
+      if (dto.propertyId !== undefined) {
+        data.property = { connect: { id: dto.propertyId } };
+      }
+      if (dto.type !== undefined) data.type = dto.type;
+      if (dto.title !== undefined) data.title = dto.title;
+      if (dto.description !== undefined) data.description = dto.description;
+      if (dto.scheduledStart !== undefined) data.scheduledStart = start;
+      if (dto.scheduledEnd !== undefined) data.scheduledEnd = end;
+      if (dto.priority !== undefined) data.priority = dto.priority;
+
+      // The draft hasn't been worked yet, so a type/property change can safely
+      // re-snapshot the cleaning checklist (or clear it when no longer CLEANING).
+      const effType = dto.type ?? job.type;
+      const typeOrPropChanged =
+        (dto.type !== undefined && dto.type !== job.type) ||
+        (dto.propertyId !== undefined && dto.propertyId !== job.propertyId);
+      if (typeOrPropChanged) {
+        const templateItems =
+          effType === 'CLEANING'
+            ? await this.prisma.checklistTemplateItem.findMany({
+                where: { template: { propertyId } },
+                orderBy: { sortOrder: 'asc' },
+              })
+            : [];
+        data.checklistItems = {
+          deleteMany: {},
+          create: templateItems.map((item, i) => ({
+            text: item.text,
+            photoRequired: item.photoRequired,
+            sortOrder: i,
+          })),
+        };
+      }
     }
 
     // Validate the merged result so a partial edit can't leave an invalid price.
     this.validatePricing({
       priceType: dto.priceType ?? job.priceType ?? undefined,
       priceCents: dto.priceCents ?? job.priceCents ?? undefined,
+      assignedWorkerId: dto.assignedWorkerId ?? job.assignedWorkerId ?? undefined,
     });
+    if (dto.priceType !== undefined) data.priceType = dto.priceType;
+    if (dto.priceCents !== undefined) data.priceCents = dto.priceCents;
+    if (dto.currency !== undefined) data.currency = dto.currency;
+    if (dto.estimatedHours !== undefined) data.estimatedHours = dto.estimatedHours;
+
+    // Re-derive status the way create does. update() only runs on DRAFT/ASSIGNED
+    // jobs and both derive correctly: a negotiable job opens for bids, an assigned
+    // one stays ASSIGNED, otherwise it's a draft.
+    const effPriceType = dto.priceType ?? job.priceType;
+    const effWorkerId = dto.assignedWorkerId ?? job.assignedWorkerId;
+    if (effPriceType === PriceType.NEGOTIABLE) {
+      data.status = JobStatus.OPEN;
+    } else if (effWorkerId) {
+      data.status = JobStatus.ASSIGNED;
+    } else {
+      data.status = JobStatus.DRAFT;
+    }
+    if (dto.assignedWorkerId && effPriceType !== PriceType.NEGOTIABLE) {
+      data.assignedWorker = { connect: { id: dto.assignedWorkerId } };
+    }
 
     const updated = await this.prisma.job.update({
       where: { id },
-      data: {
-        priceType: dto.priceType,
-        priceCents: dto.priceCents,
-        currency: dto.currency,
-        estimatedHours: dto.estimatedHours,
-      },
+      data,
       include: jobInclude,
     });
 

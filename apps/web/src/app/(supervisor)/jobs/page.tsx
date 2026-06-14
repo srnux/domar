@@ -68,7 +68,14 @@ export default function JobsPage() {
             </h2>
             <div className="flex flex-col gap-3">
               {statusJobs.map((job) => (
-                <JobCard key={job.id} job={job} href={`/jobs/${job.id}`} />
+                <JobCard
+                  key={job.id}
+                  job={job}
+                  href={`/jobs/${job.id}`}
+                  editHref={
+                    job.status === "DRAFT" ? `/jobs/${job.id}/edit` : undefined
+                  }
+                />
               ))}
             </div>
           </section>

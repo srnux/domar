@@ -83,8 +83,20 @@ export interface CreateJobPayload extends JobPricingInput {
   priority?: JobPriority;
 }
 
-/** Pricing edits, allowed while the job is DRAFT or ASSIGNED. */
-export type UpdateJobPayload = JobPricingInput;
+/**
+ * Job edits. Pricing fields are allowed while the job is DRAFT or ASSIGNED;
+ * the remaining (non-pricing) fields are only accepted while the job is DRAFT.
+ */
+export interface UpdateJobPayload extends JobPricingInput {
+  propertyId?: string;
+  type?: JobType;
+  title?: string;
+  description?: string;
+  scheduledStart?: string;
+  scheduledEnd?: string;
+  assignedWorkerId?: string;
+  priority?: JobPriority;
+}
 
 export interface TransitionJobPayload {
   to: JobStatus;

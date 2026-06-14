@@ -7,8 +7,9 @@ import {
   IsUUID,
   MinLength,
 } from 'class-validator';
+import { UpdateJobDto } from './update-job.dto';
 
-export class CreateJobDto {
+export class CreateJobDto extends UpdateJobDto {
   @IsUUID()
   propertyId!: string;
 

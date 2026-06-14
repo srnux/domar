@@ -7,10 +7,18 @@ import { ArrowLeft, BadgeCheck, UserPlus } from "lucide-react";
 import { CommentThread } from "@/components/CommentThread";
 import { JobChecklist } from "@/components/JobChecklist";
 import { JobPhotos } from "@/components/JobPhotos";
+import { JobPriceCard } from "@/components/JobPriceCard";
+import { PricingFields } from "@/components/PricingFields";
 import { StatusBadge } from "@/components/StatusBadge";
 import { JobTypeIcon } from "@/components/JobTypeIcon";
 import { formatDayHeading, formatTimeRange, localDayKey } from "@/lib/dates";
-import { useJob, useTransitionJob, useWorkers } from "@/lib/jobs";
+import { useJob, useTransitionJob, useUpdateJob, useWorkers } from "@/lib/jobs";
+import {
+  EMPTY_PRICING,
+  pricingFromJob,
+  pricingToPayload,
+  type PricingFormValue,
+} from "@/lib/pricing";
 import {
   Button,
   Callout,
@@ -28,14 +36,18 @@ export default function SupervisorJobPage({
   const { id } = use(params);
   const t = useTranslations("supervisor");
   const tj = useTranslations("jobType");
+  const tp = useTranslations("pricing");
   const router = useRouter();
   const { data: job, isPending } = useJob(id);
   const { data: workers } = useWorkers();
   const transition = useTransitionJob(id);
+  const updateJob = useUpdateJob(id);
 
   const [workerId, setWorkerId] = useState("");
   const [reopenReason, setReopenReason] = useState("");
   const [showReopen, setShowReopen] = useState(false);
+  const [pricing, setPricing] = useState<PricingFormValue>(EMPTY_PRICING);
+  const [editingPrice, setEditingPrice] = useState(false);
 
   if (isPending || !job) {
     return <PageSpinner />;
@@ -89,6 +101,59 @@ export default function SupervisorJobPage({
       {job.description && (
         <Card className="p-4 text-sm text-fg-soft">{job.description}</Card>
       )}
+
+      {(() => {
+        const priceEditable =
+          job.status === "DRAFT" || job.status === "ASSIGNED";
+        if (priceEditable && editingPrice) {
+          return (
+            <Card className="flex flex-col gap-3 p-4">
+              <PricingFields value={pricing} onChange={setPricing} />
+              {updateJob.isError && (
+                <p role="alert" className="text-sm text-st-declined">
+                  {updateJob.error.message}
+                </p>
+              )}
+              <div className="flex gap-2">
+                <Button
+                  variant="primary"
+                  onClick={() =>
+                    updateJob.mutate(pricingToPayload(pricing), {
+                      onSuccess: () => setEditingPrice(false),
+                    })
+                  }
+                  disabled={updateJob.isPending}
+                  loading={updateJob.isPending}
+                >
+                  {tp("save")}
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => setEditingPrice(false)}
+                >
+                  {t("cancel")}
+                </Button>
+              </div>
+            </Card>
+          );
+        }
+        return (
+          <div className="flex flex-col gap-2">
+            <JobPriceCard job={job} />
+            {priceEditable && (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setPricing(pricingFromJob(job));
+                  setEditingPrice(true);
+                }}
+              >
+                {job.priceType ? tp("edit") : tp("set")}
+              </Button>
+            )}
+          </div>
+        );
+      })()}
 
       <JobChecklist job={job} readOnly />
       {job.photos.length > 0 && <JobPhotos job={job} canUpload={false} />}

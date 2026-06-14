@@ -15,6 +15,7 @@ import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { CreateJobDto } from './dto/create-job.dto';
 import { TransitionJobDto } from './dto/transition-job.dto';
+import { UpdateJobDto } from './dto/update-job.dto';
 import { JobsService } from './jobs.service';
 
 @Controller('jobs')
@@ -39,6 +40,16 @@ export class JobsController {
     @Req() req: AuthenticatedRequest,
   ) {
     return this.jobs.get(id, req.user);
+  }
+
+  @Patch(':id')
+  @Roles('SUPERVISOR')
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateJobDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.jobs.update(id, dto, req.user);
   }
 
   @Patch(':id/transition')

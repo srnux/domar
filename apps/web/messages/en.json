@@ -199,6 +199,29 @@
     "update": "Update rating",
     "saved": "Rating saved"
   },
+  "pricing": {
+    "section": "Pricing",
+    "priceType": "Pricing",
+    "none": "No price",
+    "fixed": "Fixed price",
+    "hourly": "Per hour",
+    "amount": "Amount",
+    "rate": "Hourly rate",
+    "currency": "Currency",
+    "estimatedHours": "Estimated hours",
+    "estimatedHoursHint": "Optional — used to estimate the total.",
+    "spentHours": "Hours worked",
+    "spentHoursHint": "Enter the hours you worked to calculate your pay.",
+    "set": "Set price",
+    "edit": "Edit price",
+    "save": "Save price",
+    "line": {
+      "fixed": "Fixed price",
+      "rate": "Hourly rate",
+      "estimatedTotal": "Estimated total",
+      "finalTotal": "Total"
+    }
+  },
   "profile": {
     "title": "Profile",
     "back": "Back",

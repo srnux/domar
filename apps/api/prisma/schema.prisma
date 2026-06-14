@@ -55,6 +55,12 @@ enum ActivityType {
   STATUS_CHANGED
 }
 
+enum PriceType {
+  FIXED // priceCents is the total net price
+  HOURLY // priceCents is the net rate per hour
+  NEGOTIABLE // reserved for Phase 2 (bidding)
+}
+
 model User {
   id             String   @id @default(uuid())
   email          String   @unique
@@ -230,6 +236,15 @@ model Job {
   /// Reason for the latest decline/reopen/cancel, surfaced to the supervisor.
   statusReason     String?
   workerNotes      String?
+  /// Pricing (net, no tax). null priceType = no price set.
+  priceType        PriceType?
+  /// Total (FIXED) or per-hour rate (HOURLY), in minor units (cents).
+  priceCents       Int?
+  currency         String      @default("EUR")
+  /// Optional supervisor estimate, HOURLY only.
+  estimatedHours   Float?
+  /// Worker-entered actual hours at finish, HOURLY only.
+  spentHours       Float?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 

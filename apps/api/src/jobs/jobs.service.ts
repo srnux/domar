@@ -4,13 +4,20 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ActivityType, JobStatus, Prisma, Role } from '@prisma/client';
+import { ActivityType, JobStatus, PriceType, Prisma, Role } from '@prisma/client';
 import { ActivityService } from '../activity/activity.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AccessTokenPayload } from '../auth/auth.service';
 import { CreateJobDto } from './dto/create-job.dto';
 import { TransitionJobDto } from './dto/transition-job.dto';
+import { UpdateJobDto } from './dto/update-job.dto';
 import { availableTransitions, canTransition } from './job-status.machine';
+
+/** Pricing edits are only allowed before work starts. */
+const PRICE_EDITABLE_STATUSES: JobStatus[] = [
+  JobStatus.DRAFT,
+  JobStatus.ASSIGNED,
+];
 
 const jobInclude = {
   property: {
@@ -110,6 +117,8 @@ export class JobsService {
           })
         : [];
 
+    this.validatePricing(dto);
+
     const job = await this.prisma.job.create({
       data: {
         propertyId: dto.propertyId,
@@ -122,6 +131,10 @@ export class JobsService {
         assignedWorkerId: dto.assignedWorkerId,
         status: dto.assignedWorkerId ? JobStatus.ASSIGNED : JobStatus.DRAFT,
         createdById: actor.sub,
+        priceType: dto.priceType,
+        priceCents: dto.priceCents,
+        currency: dto.currency,
+        estimatedHours: dto.estimatedHours,
         checklistItems: {
           create: templateItems.map((item, i) => ({
             text: item.text,
@@ -141,6 +154,40 @@ export class JobsService {
     });
 
     return this.toDto(job, actor);
+  }
+
+  /** Supervisor edits to a job's pricing, allowed only before work starts. */
+  async update(id: string, dto: UpdateJobDto, actor: AccessTokenPayload) {
+    const job = await this.prisma.job.findFirst({
+      where: { AND: [{ id }, this.scopeFor(actor)] },
+      include: jobInclude,
+    });
+    if (!job) throw new NotFoundException();
+
+    if (!PRICE_EDITABLE_STATUSES.includes(job.status)) {
+      throw new BadRequestException(
+        'Price can only be changed while the job is DRAFT or ASSIGNED',
+      );
+    }
+
+    // Validate the merged result so a partial edit can't leave an invalid price.
+    this.validatePricing({
+      priceType: dto.priceType ?? job.priceType ?? undefined,
+      priceCents: dto.priceCents ?? job.priceCents ?? undefined,
+    });
+
+    const updated = await this.prisma.job.update({
+      where: { id },
+      data: {
+        priceType: dto.priceType,
+        priceCents: dto.priceCents,
+        currency: dto.currency,
+        estimatedHours: dto.estimatedHours,
+      },
+      include: jobInclude,
+    });
+
+    return this.toDto(updated, actor);
   }
 
   async list(actor: AccessTokenPayload) {
@@ -201,6 +248,14 @@ export class JobsService {
     if (dto.to === JobStatus.DONE && dto.workerNotes !== undefined) {
       data.workerNotes = dto.workerNotes;
     }
+    // Worker logs their actual hours when finishing an hourly job.
+    if (
+      dto.to === JobStatus.DONE &&
+      job.priceType === PriceType.HOURLY &&
+      dto.spentHours !== undefined
+    ) {
+      data.spentHours = dto.spentHours;
+    }
 
     const updated = await this.prisma.job.update({
       where: { id },
@@ -250,6 +305,25 @@ export class JobsService {
     if (missingPhoto.length > 0) {
       throw new ConflictException(
         `Photo required: ${missingPhoto.map((i) => i.text).join(', ')}`,
+      );
+    }
+  }
+
+  /**
+   * A FIXED/HOURLY job must carry an amount; NEGOTIABLE is reserved for the
+   * Phase 2 bidding flow and is rejected until then.
+   */
+  private validatePricing(pricing: {
+    priceType?: PriceType | null;
+    priceCents?: number | null;
+  }) {
+    if (!pricing.priceType) return;
+    if (pricing.priceType === PriceType.NEGOTIABLE) {
+      throw new BadRequestException('Negotiable pricing is not available yet');
+    }
+    if (pricing.priceCents == null) {
+      throw new BadRequestException(
+        'priceCents is required for FIXED and HOURLY pricing',
       );
     }
   }

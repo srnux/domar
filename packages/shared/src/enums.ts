@@ -37,6 +37,14 @@ export const JobPriority = {
 } as const;
 export type JobPriority = (typeof JobPriority)[keyof typeof JobPriority];
 
+export const PriceType = {
+  FIXED: 'FIXED',
+  HOURLY: 'HOURLY',
+  /** Reserved for the Phase 2 bidding flow — rejected on create/update in Phase 1. */
+  NEGOTIABLE: 'NEGOTIABLE',
+} as const;
+export type PriceType = (typeof PriceType)[keyof typeof PriceType];
+
 export const PhotoKind = {
   BEFORE: 'BEFORE',
   AFTER: 'AFTER',

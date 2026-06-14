@@ -1,5 +1,12 @@
 import { JobStatus } from '@prisma/client';
-import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
 
 export class TransitionJobDto {
   @IsEnum(JobStatus)
@@ -16,4 +23,10 @@ export class TransitionJobDto {
   @IsOptional()
   @IsString()
   workerNotes?: string;
+
+  /** Worker's actual hours, accepted when finishing an HOURLY job. */
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  spentHours?: number;
 }

@@ -9,6 +9,8 @@ import { findConflicts, workerMatchesJobType } from "@/lib/assign";
 import { useUpdateBooking } from "@/lib/bookings";
 import { formatTimeRange } from "@/lib/dates";
 import { useCreateJob, useJobs, useProperties, useWorkers } from "@/lib/jobs";
+import { EMPTY_PRICING, pricingToPayload, type PricingFormValue } from "@/lib/pricing";
+import { PricingFields } from "@/components/PricingFields";
 import {
   Button,
   Callout,
@@ -58,6 +60,7 @@ function NewJobForm() {
     prefillEnd ? toLocalInput(prefillEnd, "time") : "13:00",
   );
   const [workerId, setWorkerId] = useState("");
+  const [pricing, setPricing] = useState<PricingFormValue>(EMPTY_PRICING);
 
   const eligibleWorkers = useMemo(
     () => (workers ?? []).filter((w) => workerMatchesJobType(w, type)),
@@ -85,6 +88,7 @@ function NewJobForm() {
         scheduledStart: new Date(`${date}T${startTime}`).toISOString(),
         scheduledEnd: new Date(`${date}T${endTime}`).toISOString(),
         assignedWorkerId: workerId || undefined,
+        ...pricingToPayload(pricing),
       },
       {
         onSuccess: (job) => {
@@ -196,6 +200,8 @@ function NewJobForm() {
             ))}
           </Select>
         </Field>
+
+        <PricingFields value={pricing} onChange={setPricing} />
 
         {conflicts.length > 0 && (
           <Callout

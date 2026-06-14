@@ -356,6 +356,130 @@ describe('Jobs & Properties (e2e)', () => {
     });
   });
 
+  describe('pricing', () => {
+    beforeAll(async () => {
+      await prisma.job.deleteMany();
+    });
+
+    it('creates a fixed-price job', async () => {
+      const res = await asUser('ana@domar.test')
+        .post('/api/jobs')
+        .send(jobPayload({ priceType: 'FIXED', priceCents: 8000 }))
+        .expect(201);
+      expect(res.body.priceType).toBe('FIXED');
+      expect(res.body.priceCents).toBe(8000);
+      expect(res.body.currency).toBe('EUR');
+    });
+
+    it('creates an hourly job with estimated hours and a currency', async () => {
+      const res = await asUser('ana@domar.test')
+        .post('/api/jobs')
+        .send(
+          jobPayload({
+            priceType: 'HOURLY',
+            priceCents: 1500,
+            estimatedHours: 3,
+            currency: 'USD',
+          }),
+        )
+        .expect(201);
+      expect(res.body.priceType).toBe('HOURLY');
+      expect(res.body.estimatedHours).toBe(3);
+      expect(res.body.currency).toBe('USD');
+    });
+
+    it('rejects FIXED/HOURLY without an amount', async () => {
+      await asUser('ana@domar.test')
+        .post('/api/jobs')
+        .send(jobPayload({ priceType: 'FIXED' }))
+        .expect(400);
+    });
+
+    it('rejects NEGOTIABLE pricing (reserved for Phase 2)', async () => {
+      await asUser('ana@domar.test')
+        .post('/api/jobs')
+        .send(jobPayload({ priceType: 'NEGOTIABLE' }))
+        .expect(400);
+    });
+
+    it('supervisor edits price while the job is DRAFT', async () => {
+      const created = await asUser('ana@domar.test')
+        .post('/api/jobs')
+        .send(jobPayload({ priceType: 'FIXED', priceCents: 5000 }));
+      const updated = await asUser('ana@domar.test')
+        .patch(`/api/jobs/${created.body.id}`)
+        .send({ priceType: 'HOURLY', priceCents: 2000, estimatedHours: 4 })
+        .expect(200);
+      expect(updated.body.priceType).toBe('HOURLY');
+      expect(updated.body.priceCents).toBe(2000);
+      expect(updated.body.estimatedHours).toBe(4);
+    });
+
+    it('non-supervisors cannot edit price', async () => {
+      const created = await asUser('ana@domar.test')
+        .post('/api/jobs')
+        .send(jobPayload({ priceType: 'FIXED', priceCents: 5000 }));
+      await asUser('marko@domar.test')
+        .patch(`/api/jobs/${created.body.id}`)
+        .send({ priceCents: 1 })
+        .expect(403);
+    });
+
+    it('rejects a price edit once work has started', async () => {
+      const created = await asUser('ana@domar.test')
+        .post('/api/jobs')
+        .send(
+          jobPayload({
+            assignedWorkerId: markoId,
+            priceType: 'HOURLY',
+            priceCents: 1500,
+          }),
+        );
+      const id = created.body.id;
+      await asUser('marko@domar.test')
+        .patch(`/api/jobs/${id}/transition`)
+        .send({ to: 'ACCEPTED' })
+        .expect(200);
+      await asUser('marko@domar.test')
+        .patch(`/api/jobs/${id}/transition`)
+        .send({ to: 'IN_PROGRESS' })
+        .expect(200);
+
+      await asUser('ana@domar.test')
+        .patch(`/api/jobs/${id}`)
+        .send({ priceCents: 9999 })
+        .expect(400);
+    });
+
+    it('records worker spent hours when finishing an hourly job', async () => {
+      const created = await asUser('ana@domar.test')
+        .post('/api/jobs')
+        .send(
+          jobPayload({
+            assignedWorkerId: markoId,
+            type: 'OTHER',
+            title: 'Hourly finish',
+            priceType: 'HOURLY',
+            priceCents: 2000,
+          }),
+        );
+      const id = created.body.id;
+      await asUser('marko@domar.test')
+        .patch(`/api/jobs/${id}/transition`)
+        .send({ to: 'ACCEPTED' })
+        .expect(200);
+      await asUser('marko@domar.test')
+        .patch(`/api/jobs/${id}/transition`)
+        .send({ to: 'IN_PROGRESS' })
+        .expect(200);
+      const done = await asUser('marko@domar.test')
+        .patch(`/api/jobs/${id}/transition`)
+        .send({ to: 'DONE', spentHours: 2.5 })
+        .expect(200);
+      expect(done.body.spentHours).toBe(2.5);
+    });
+  });
+
   describe('properties', () => {
     it('supervisor creates and lists properties', async () => {
       const res = await asUser('ana@domar.test')

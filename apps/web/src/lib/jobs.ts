@@ -5,6 +5,7 @@ import type {
   JobDto,
   PropertyDto,
   TransitionJobPayload,
+  UpdateJobPayload,
   UserDto,
 } from "@domar/shared";
 import {
@@ -39,6 +40,21 @@ export function useCreateJob() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["jobs"] });
       void queryClient.invalidateQueries({ queryKey: ["activity"] });
+    },
+  });
+}
+
+export function useUpdateJob(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation<JobDto, ApiError, UpdateJobPayload>({
+    mutationFn: (payload) =>
+      api<JobDto>(`/api/jobs/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: (job) => {
+      queryClient.setQueryData(["jobs", id], job);
+      void queryClient.invalidateQueries({ queryKey: ["jobs"] });
     },
   });
 }

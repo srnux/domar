@@ -1,13 +1,15 @@
 import type { JobDto } from "@domar/shared";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Clock, User } from "lucide-react";
+import { Clock, User, Wallet } from "lucide-react";
 import { formatTimeRange } from "@/lib/dates";
+import { priceLabel } from "@/lib/pricing";
 import { StatusBadge } from "./StatusBadge";
 import { JobTypeIcon } from "./JobTypeIcon";
 
 export function JobCard({ job, href }: { job: JobDto; href: string }) {
   const t = useTranslations("jobType");
+  const price = priceLabel(job);
   return (
     <Link
       href={href}
@@ -31,6 +33,12 @@ export function JobCard({ job, href }: { job: JobDto; href: string }) {
           <span className="inline-flex items-center gap-1.5">
             <User size={14} className="text-subtle" aria-hidden />
             {job.assignedWorker.name}
+          </span>
+        )}
+        {price && (
+          <span className="inline-flex items-center gap-1.5 tabular-nums">
+            <Wallet size={14} className="text-subtle" aria-hidden />
+            {price}
           </span>
         )}
       </p>

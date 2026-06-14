@@ -7,6 +7,7 @@ import { ArrowLeft, ExternalLink, KeyRound, MapPin } from "lucide-react";
 import { CommentThread } from "@/components/CommentThread";
 import { JobChecklist } from "@/components/JobChecklist";
 import { JobPhotos } from "@/components/JobPhotos";
+import { JobPriceCard } from "@/components/JobPriceCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { JobTypeIcon } from "@/components/JobTypeIcon";
 import { formatTimeRange, localDayKey, formatDayHeading } from "@/lib/dates";
@@ -15,6 +16,8 @@ import {
   Button,
   Callout,
   Card,
+  Field,
+  Input,
   PageSpinner,
   Textarea,
 } from "@/components/ui";
@@ -27,6 +30,7 @@ export default function WorkerJobPage({
   const { id } = use(params);
   const t = useTranslations("worker");
   const tj = useTranslations("jobType");
+  const tp = useTranslations("pricing");
   const router = useRouter();
   const { data: job, isPending } = useJob(id);
   const transition = useTransitionJob(id);
@@ -34,6 +38,7 @@ export default function WorkerJobPage({
   const [declineReason, setDeclineReason] = useState("");
   const [showDecline, setShowDecline] = useState(false);
   const [notes, setNotes] = useState("");
+  const [spentHours, setSpentHours] = useState("");
   const [showFinish, setShowFinish] = useState(false);
 
   if (isPending || !job) {
@@ -109,6 +114,8 @@ export default function WorkerJobPage({
       {job.description && (
         <Card className="p-4 text-sm text-fg-soft">{job.description}</Card>
       )}
+
+      <JobPriceCard job={job} />
 
       <JobChecklist
         job={job}
@@ -199,6 +206,17 @@ export default function WorkerJobPage({
         )}
         {showFinish && (
           <div className="flex flex-col gap-2 rounded-md border border-accent-line bg-accent-soft p-3">
+            {job.priceType === "HOURLY" && (
+              <Field label={tp("spentHours")} hint={tp("spentHoursHint")}>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.25"
+                  value={spentHours}
+                  onChange={(e) => setSpentHours(e.target.value)}
+                />
+              </Field>
+            )}
             <label className="text-sm font-medium text-accent-fg">
               {t("finishNotes")}
             </label>
@@ -212,7 +230,16 @@ export default function WorkerJobPage({
               variant="primary"
               size="lg"
               fullWidth
-              onClick={() => act({ to: "DONE", workerNotes: notes })}
+              onClick={() =>
+                act({
+                  to: "DONE",
+                  workerNotes: notes,
+                  spentHours:
+                    job.priceType === "HOURLY" && spentHours.trim() !== ""
+                      ? parseFloat(spentHours)
+                      : undefined,
+                })
+              }
               disabled={transition.isPending}
             >
               {t("confirmFinish")}

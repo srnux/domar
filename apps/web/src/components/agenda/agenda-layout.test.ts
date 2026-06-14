@@ -53,6 +53,7 @@ function job(overrides: {
     currency: "EUR",
     estimatedHours: null,
     spentHours: null,
+    bidCount: 0,
     allowedTransitions: [],
     checklistItems: [],
     photos: [],

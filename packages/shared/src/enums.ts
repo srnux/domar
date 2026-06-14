@@ -45,6 +45,13 @@ export const PriceType = {
 } as const;
 export type PriceType = (typeof PriceType)[keyof typeof PriceType];
 
+export const BidStatus = {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  REJECTED: 'REJECTED',
+} as const;
+export type BidStatus = (typeof BidStatus)[keyof typeof BidStatus];
+
 export const PhotoKind = {
   BEFORE: 'BEFORE',
   AFTER: 'AFTER',

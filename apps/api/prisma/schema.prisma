@@ -58,7 +58,31 @@ enum ActivityType {
 enum PriceType {
   FIXED // priceCents is the total net price
   HOURLY // priceCents is the net rate per hour
-  NEGOTIABLE // reserved for Phase 2 (bidding)
+  NEGOTIABLE // open for bidding (Phase 2)
+}
+
+enum BidStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Bid {
+  id          String    @id @default(uuid())
+  jobId       String
+  job         Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  workerId    String
+  worker      User      @relation("WorkerBids", fields: [workerId], references: [id], onDelete: Cascade)
+  priceType   PriceType // FIXED or HOURLY proposal
+  /// Total (FIXED) or per-hour rate (HOURLY), in the job's currency (minor units).
+  amountCents Int
+  message     String?
+  status      BidStatus @default(PENDING)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([jobId, workerId])
+  @@index([jobId])
 }
 
 model User {
@@ -84,6 +108,7 @@ model User {
   activityEvents ActivityEvent[]
   ratingsReceived JobRating[]   @relation("RatingsReceived")
   ratingsGiven    JobRating[]   @relation("RatingsGiven")
+  bids            Bid[]         @relation("WorkerBids")
 }
 
 model Property {
@@ -254,6 +279,7 @@ model Job {
   activityEvents ActivityEvent[]
   booking        Booking?
   rating         JobRating?
+  bids           Bid[]
 
   @@index([propertyId])
   @@index([assignedWorkerId, scheduledStart])

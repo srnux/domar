@@ -87,7 +87,9 @@ function NewJobForm() {
         description: description || undefined,
         scheduledStart: new Date(`${date}T${startTime}`).toISOString(),
         scheduledEnd: new Date(`${date}T${endTime}`).toISOString(),
-        assignedWorkerId: workerId || undefined,
+        // A negotiable job is assigned by accepting a bid, not up front.
+        assignedWorkerId:
+          pricing.priceType === "NEGOTIABLE" ? undefined : workerId || undefined,
         ...pricingToPayload(pricing),
       },
       {
@@ -201,7 +203,7 @@ function NewJobForm() {
           </Select>
         </Field>
 
-        <PricingFields value={pricing} onChange={setPricing} />
+        <PricingFields value={pricing} onChange={setPricing} allowNegotiable />
 
         {conflicts.length > 0 && (
           <Callout

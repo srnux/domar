@@ -43,6 +43,8 @@ export interface JobDto {
   estimatedHours: number | null;
   /** Worker-entered actual hours at finish, HOURLY only. */
   spentHours: number | null;
+  /** Number of bids placed (relevant for OPEN negotiable jobs; 0 otherwise). */
+  bidCount: number;
   /** Status values the requesting user may move this job to. */
   allowedTransitions: JobStatus[];
   checklistItems: ChecklistItemDto[];

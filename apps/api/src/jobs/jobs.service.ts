@@ -12,6 +12,7 @@ import { CreateJobDto } from './dto/create-job.dto';
 import { TransitionJobDto } from './dto/transition-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
 import { availableTransitions, canTransition } from './job-status.machine';
+import { toBidDto } from '../bids/bid.mapper';
 
 /** Pricing edits are only allowed before work starts. */
 const PRICE_EDITABLE_STATUSES: JobStatus[] = [
@@ -53,6 +54,7 @@ const jobInclude = {
     },
   },
   rating: { select: { score: true, comment: true } },
+  _count: { select: { bids: true } },
 } satisfies Prisma.JobInclude;
 
 type JobWithRelations = Prisma.JobGetPayload<{ include: typeof jobInclude }>;
@@ -65,9 +67,16 @@ export class JobsService {
   ) {}
 
   private toDto(job: JobWithRelations, actor: AccessTokenPayload) {
-    const { propertyId: _p, assignedWorkerId, createdById: _c, ...rest } = job;
+    const {
+      propertyId: _p,
+      assignedWorkerId,
+      createdById: _c,
+      _count,
+      ...rest
+    } = job;
     return {
       ...rest,
+      bidCount: _count.bids,
       allowedTransitions: availableTransitions(job.status, {
         role: actor.role,
         isAssignedWorker: assignedWorkerId === actor.sub,
@@ -119,6 +128,15 @@ export class JobsService {
 
     this.validatePricing(dto);
 
+    // A negotiable job opens for bids immediately; otherwise the usual
+    // draft/assigned split applies.
+    const status =
+      dto.priceType === PriceType.NEGOTIABLE
+        ? JobStatus.OPEN
+        : dto.assignedWorkerId
+          ? JobStatus.ASSIGNED
+          : JobStatus.DRAFT;
+
     const job = await this.prisma.job.create({
       data: {
         propertyId: dto.propertyId,
@@ -129,7 +147,7 @@ export class JobsService {
         scheduledStart: start,
         scheduledEnd: end,
         assignedWorkerId: dto.assignedWorkerId,
-        status: dto.assignedWorkerId ? JobStatus.ASSIGNED : JobStatus.DRAFT,
+        status,
         createdById: actor.sub,
         priceType: dto.priceType,
         priceCents: dto.priceCents,
@@ -197,6 +215,25 @@ export class JobsService {
       orderBy: { scheduledStart: 'asc' },
     });
     return jobs.map((j) => this.toDto(j, actor));
+  }
+
+  /** The bidding pool: open negotiable jobs, each with the caller's own bid. */
+  async listOpenForBids(actor: AccessTokenPayload) {
+    const jobs = await this.prisma.job.findMany({
+      where: { status: JobStatus.OPEN, priceType: PriceType.NEGOTIABLE },
+      include: {
+        ...jobInclude,
+        bids: {
+          where: { workerId: actor.sub },
+          include: { worker: { select: { id: true, name: true } } },
+        },
+      },
+      orderBy: { scheduledStart: 'asc' },
+    });
+    return jobs.map(({ bids, ...job }) => ({
+      ...this.toDto(job, actor),
+      myBid: bids[0] ? toBidDto(bids[0]) : null,
+    }));
   }
 
   async get(id: string, actor: AccessTokenPayload) {
@@ -310,16 +347,27 @@ export class JobsService {
   }
 
   /**
-   * A FIXED/HOURLY job must carry an amount; NEGOTIABLE is reserved for the
-   * Phase 2 bidding flow and is rejected until then.
+   * A FIXED/HOURLY job must carry an amount. A NEGOTIABLE job carries no price
+   * (it's set by accepting a bid) and cannot be pre-assigned to a worker.
    */
   private validatePricing(pricing: {
     priceType?: PriceType | null;
     priceCents?: number | null;
+    assignedWorkerId?: string | null;
   }) {
     if (!pricing.priceType) return;
     if (pricing.priceType === PriceType.NEGOTIABLE) {
-      throw new BadRequestException('Negotiable pricing is not available yet');
+      if (pricing.priceCents != null) {
+        throw new BadRequestException(
+          'A negotiable job must not carry a fixed price',
+        );
+      }
+      if (pricing.assignedWorkerId) {
+        throw new BadRequestException(
+          'A negotiable job cannot be pre-assigned; it is assigned by accepting a bid',
+        );
+      }
+      return;
     }
     if (pricing.priceCents == null) {
       throw new BadRequestException(

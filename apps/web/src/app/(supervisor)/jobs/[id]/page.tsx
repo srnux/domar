@@ -4,6 +4,7 @@ import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, BadgeCheck, UserPlus } from "lucide-react";
+import { BidsPanel } from "@/components/BidsPanel";
 import { CommentThread } from "@/components/CommentThread";
 import { JobChecklist } from "@/components/JobChecklist";
 import { JobPhotos } from "@/components/JobPhotos";
@@ -100,6 +101,10 @@ export default function SupervisorJobPage({
       )}
       {job.description && (
         <Card className="p-4 text-sm text-fg-soft">{job.description}</Card>
+      )}
+
+      {job.priceType === "NEGOTIABLE" && job.status === "OPEN" && (
+        <BidsPanel jobId={job.id} currency={job.currency} />
       )}
 
       {(() => {

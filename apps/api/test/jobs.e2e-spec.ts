@@ -395,10 +395,24 @@ describe('Jobs & Properties (e2e)', () => {
         .expect(400);
     });
 
-    it('rejects NEGOTIABLE pricing (reserved for Phase 2)', async () => {
-      await asUser('ana@domar.test')
+    it('opens a NEGOTIABLE job for bidding (status OPEN)', async () => {
+      const res = await asUser('ana@domar.test')
         .post('/api/jobs')
         .send(jobPayload({ priceType: 'NEGOTIABLE' }))
+        .expect(201);
+      expect(res.body.priceType).toBe('NEGOTIABLE');
+      expect(res.body.status).toBe('OPEN');
+      expect(res.body.priceCents).toBeNull();
+    });
+
+    it('rejects a NEGOTIABLE job that carries a fixed price or worker', async () => {
+      await asUser('ana@domar.test')
+        .post('/api/jobs')
+        .send(jobPayload({ priceType: 'NEGOTIABLE', priceCents: 5000 }))
+        .expect(400);
+      await asUser('ana@domar.test')
+        .post('/api/jobs')
+        .send(jobPayload({ priceType: 'NEGOTIABLE', assignedWorkerId: markoId }))
         .expect(400);
     });
 

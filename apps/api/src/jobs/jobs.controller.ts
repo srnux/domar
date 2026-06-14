@@ -34,6 +34,13 @@ export class JobsController {
     return this.jobs.list(req.user);
   }
 
+  // Literal route must precede the ':id' (ParseUUIDPipe) route to match.
+  @Get('open-for-bids')
+  @Roles('WORKER')
+  openForBids(@Req() req: AuthenticatedRequest) {
+    return this.jobs.listOpenForBids(req.user);
+  }
+
   @Get(':id')
   get(
     @Param('id', ParseUUIDPipe) id: string,

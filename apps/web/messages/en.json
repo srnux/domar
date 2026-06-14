@@ -13,7 +13,7 @@
   },
   "status": {
     "DRAFT": "Draft",
-    "OPEN": "Open",
+    "OPEN": "Open for bids",
     "ASSIGNED": "Assigned",
     "ACCEPTED": "Accepted",
     "DECLINED": "Declined",
@@ -215,11 +215,38 @@
     "set": "Set price",
     "edit": "Edit price",
     "save": "Save price",
+    "negotiable": "Negotiable (open for bids)",
+    "negotiableHint": "Workers bid on the price; you accept one.",
     "line": {
       "fixed": "Fixed price",
       "rate": "Hourly rate",
       "estimatedTotal": "Estimated total",
       "finalTotal": "Total"
+    }
+  },
+  "bids": {
+    "tab": "Bids",
+    "title": "Open for bids",
+    "subtitle": "Negotiable jobs matching your skills — propose your price",
+    "empty": "No open jobs to bid on right now. When a supervisor opens a job for bids that matches your skills, it appears here.",
+    "reviewBids": "Review bids ({count})",
+    "bidType": "Bid type",
+    "fixed": "Fixed price",
+    "hourly": "Per hour",
+    "amount": "Amount",
+    "rate": "Hourly rate",
+    "message": "Message (optional)",
+    "submit": "Submit bid",
+    "update": "Update bid",
+    "withdraw": "Withdraw",
+    "yourBid": "Your bid: {amount} —",
+    "panelTitle": "Bids",
+    "noBids": "No bids yet",
+    "accept": "Accept",
+    "status": {
+      "PENDING": "Pending",
+      "ACCEPTED": "Accepted",
+      "REJECTED": "Rejected"
     }
   },
   "profile": {

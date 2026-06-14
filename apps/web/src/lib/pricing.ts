@@ -5,8 +5,8 @@ export const CURRENCY_OPTIONS = ["EUR", "USD", "GBP", "CHF", "HRK"] as const;
 
 /** Controlled form state for the pricing inputs (amounts in major units). */
 export interface PricingFormValue {
-  /** "" means no price. */
-  priceType: "" | "FIXED" | "HOURLY";
+  /** "" means no price. NEGOTIABLE opens the job for bidding. */
+  priceType: "" | "FIXED" | "HOURLY" | "NEGOTIABLE";
   /** Total (FIXED) or per-hour rate (HOURLY), in major units as typed. */
   amount: string;
   currency: string;
@@ -36,6 +36,10 @@ export function pricingToPayload(value: PricingFormValue): JobPricingInput {
   if (!value.priceType) {
     // Clearing the price: send an explicit null-equivalent so an edit can unset it.
     return { priceType: undefined, priceCents: undefined };
+  }
+  // A negotiable job carries no fixed price — it's set by accepting a bid.
+  if (value.priceType === "NEGOTIABLE") {
+    return { priceType: "NEGOTIABLE", currency: value.currency };
   }
   const payload: JobPricingInput = {
     priceType: value.priceType as PriceType,

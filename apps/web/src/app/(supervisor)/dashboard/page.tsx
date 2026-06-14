@@ -35,7 +35,10 @@ export default function DashboardPage() {
 
   const today = todayKey();
   const needsAttention = (jobs ?? []).filter(
-    (j) => j.status === "DRAFT" || j.status === "DECLINED",
+    (j) =>
+      j.status === "DRAFT" ||
+      j.status === "DECLINED" ||
+      j.status === "OPEN",
   );
   const active = (jobs ?? []).filter(
     (j) => j.status !== "VERIFIED" && j.status !== "CANCELLED",

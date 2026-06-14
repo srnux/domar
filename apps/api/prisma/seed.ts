@@ -196,8 +196,40 @@ async function main() {
           status: JobStatus.ASSIGNED, assignedWorkerId: marko.id,
           scheduledStart: at(1, 11), scheduledEnd: at(1, 14), createdById: ana.id,
         },
+        // open for bids — negotiable, no worker yet (cleaners marko/petra can bid)
+        {
+          propertyId: kolovare.id, type: 'CLEANING', title: 'Deep clean — open for bids',
+          status: JobStatus.OPEN, priceType: 'NEGOTIABLE', currency: 'EUR',
+          scheduledStart: at(3, 9), scheduledEnd: at(3, 13), createdById: ana.id,
+        },
+        // open for bids — repair (ivan can bid)
+        {
+          propertyId: borik.id, type: 'REPAIR', title: 'Fix garden fence — open for bids',
+          status: JobStatus.OPEN, priceType: 'NEGOTIABLE', currency: 'EUR',
+          scheduledStart: at(3, 14), scheduledEnd: at(3, 16), createdById: ana.id,
+        },
       ],
     });
+  }
+
+  if ((await prisma.bid.count()) === 0) {
+    const cleaningBidJob = await prisma.job.findFirst({
+      where: { title: 'Deep clean — open for bids', status: JobStatus.OPEN },
+    });
+    if (cleaningBidJob) {
+      await prisma.bid.createMany({
+        data: [
+          {
+            jobId: cleaningBidJob.id, workerId: marko.id,
+            priceType: 'FIXED', amountCents: 9000, message: 'Can do it Thursday morning.',
+          },
+          {
+            jobId: cleaningBidJob.id, workerId: petra.id,
+            priceType: 'HOURLY', amountCents: 2200, message: 'Available, ~3h.',
+          },
+        ],
+      });
+    }
   }
 
   if ((await prisma.activityEvent.count()) === 0) {
@@ -279,7 +311,7 @@ async function main() {
     });
   }
 
-  console.log(`Seeded: 7 users (password: ${PASSWORD}), 5 properties, ${await prisma.job.count()} jobs, ${await prisma.booking.count()} bookings, ${await prisma.activityEvent.count()} activity events`);
+  console.log(`Seeded: 7 users (password: ${PASSWORD}), 5 properties, ${await prisma.job.count()} jobs, ${await prisma.bid.count()} bids, ${await prisma.booking.count()} bookings, ${await prisma.activityEvent.count()} activity events`);
   console.log('Logins: ana@ (supervisor), marko@/ivan@/petra@ (workers), klaus@/lena@ (owners) — all @domar.test');
 }
 

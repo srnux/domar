@@ -26,10 +26,12 @@ interface TransitionRule {
  *            └────┴──────────── supervisor ──────┘
  *
  * CANCELLED is reachable by the supervisor from every pre-done state.
- * OPEN is reserved for the future claim-pool and is inert in v1.
+ * OPEN holds a negotiable job in the bidding pool; the supervisor moves it to
+ * ASSIGNED by accepting a bid.
  */
 const RULES: TransitionRule[] = [
   { from: JobStatus.DRAFT, to: JobStatus.ASSIGNED, roles: [Role.SUPERVISOR] },
+  { from: JobStatus.OPEN, to: JobStatus.ASSIGNED, roles: [Role.SUPERVISOR] },
   {
     from: JobStatus.ASSIGNED,
     to: JobStatus.ACCEPTED,
@@ -70,6 +72,7 @@ const RULES: TransitionRule[] = [
   },
   ...[
     JobStatus.DRAFT,
+    JobStatus.OPEN,
     JobStatus.ASSIGNED,
     JobStatus.ACCEPTED,
     JobStatus.DECLINED,

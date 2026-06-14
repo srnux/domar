@@ -4,12 +4,12 @@ import type { JobDto } from "@domar/shared";
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { CornerDownRight } from "lucide-react";
+import { CornerDownRight, Gavel } from "lucide-react";
 import { formatTimeRange } from "@/lib/dates";
 import { useTransitionJob, useWorkers } from "@/lib/jobs";
 import { StatusBadge } from "./StatusBadge";
 import { JobTypeIcon } from "./JobTypeIcon";
-import { Button, Select } from "@/components/ui";
+import { Button, buttonClass, Select } from "@/components/ui";
 
 /**
  * Actionable card for the supervisor dashboard "Needs attention" grid.
@@ -19,13 +19,16 @@ import { Button, Select } from "@/components/ui";
 export function AttentionCard({ job }: { job: JobDto }) {
   const t = useTranslations("supervisor");
   const tType = useTranslations("jobType");
+  const tBids = useTranslations("bids");
   const { data: workers } = useWorkers();
   const transition = useTransitionJob(job.id);
 
   const [assigning, setAssigning] = useState(false);
   const [workerId, setWorkerId] = useState("");
 
-  const canAssign = job.allowedTransitions.includes("ASSIGNED");
+  // An open negotiable job is resolved by accepting a bid, not direct assignment.
+  const isBidding = job.status === "OPEN" && job.priceType === "NEGOTIABLE";
+  const canAssign = !isBidding && job.allowedTransitions.includes("ASSIGNED");
   const canCancel = job.allowedTransitions.includes("CANCELLED");
 
   return (
@@ -62,7 +65,27 @@ export function AttentionCard({ job }: { job: JobDto }) {
         </p>
       )}
 
-      {assigning ? (
+      {isBidding ? (
+        <div className="mt-0.5 flex items-center gap-2">
+          <Link
+            href={`/jobs/${job.id}`}
+            className={buttonClass({ variant: "primary", size: "sm" })}
+          >
+            <Gavel size={14} aria-hidden />
+            {tBids("reviewBids", { count: job.bidCount })}
+          </Link>
+          {canCancel && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => transition.mutate({ to: "CANCELLED" })}
+              disabled={transition.isPending}
+            >
+              {t("cancelJob")}
+            </Button>
+          )}
+        </div>
+      ) : assigning ? (
         <div className="flex flex-col gap-2">
           <Select
             value={workerId}

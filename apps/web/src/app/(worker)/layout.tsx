@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { CalendarDays, LogOut, Sun } from "lucide-react";
+import { CalendarDays, HandCoins, LogOut, Sun } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { RequireRole } from "@/components/RequireRole";
 import { UserMenu } from "@/components/UserMenu";
@@ -41,6 +41,7 @@ export default function WorkerLayout({
   children: React.ReactNode;
 }) {
   const t = useTranslations("worker");
+  const tBids = useTranslations("bids");
   const logout = useLogout();
   const router = useRouter();
   return (
@@ -71,6 +72,7 @@ export default function WorkerLayout({
         <nav className="dom-frost fixed inset-x-0 bottom-0 z-40 flex border-t border-border pb-[env(safe-area-inset-bottom)]">
           <Tab href="/my-day" label={t("myDay")} icon={Sun} />
           <Tab href="/my-week" label={t("myWeek")} icon={CalendarDays} />
+          <Tab href="/bids" label={tBids("tab")} icon={HandCoins} />
         </nav>
       </div>
     </RequireRole>

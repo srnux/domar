@@ -9,6 +9,7 @@ import { CommentThread } from "@/components/CommentThread";
 import { JobChecklist } from "@/components/JobChecklist";
 import { JobPhotos } from "@/components/JobPhotos";
 import { JobPriceCard } from "@/components/JobPriceCard";
+import { PriceTypeBadge } from "@/components/PriceTypeBadge";
 import { PricingFields } from "@/components/PricingFields";
 import { StatusBadge } from "@/components/StatusBadge";
 import { JobTypeIcon } from "@/components/JobTypeIcon";
@@ -67,9 +68,12 @@ export default function SupervisorJobPage({
 
       <div>
         <div className="flex items-center justify-between">
-          <span className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted">
-            <JobTypeIcon type={job.type} size={14} className="text-subtle" />
-            {tj(job.type)}
+          <span className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted">
+              <JobTypeIcon type={job.type} size={14} className="text-subtle" />
+              {tj(job.type)}
+            </span>
+            <PriceTypeBadge job={job} />
           </span>
           <StatusBadge status={job.status} />
         </div>

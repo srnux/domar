@@ -6,6 +6,7 @@ import { formatTimeRange } from "@/lib/dates";
 import { priceLabel } from "@/lib/pricing";
 import { StatusBadge } from "./StatusBadge";
 import { JobTypeIcon } from "./JobTypeIcon";
+import { PriceTypeBadge } from "./PriceTypeBadge";
 
 export function JobCard({ job, href }: { job: JobDto; href: string }) {
   const t = useTranslations("jobType");
@@ -16,9 +17,12 @@ export function JobCard({ job, href }: { job: JobDto; href: string }) {
       className="group block rounded-lg border border-border bg-surface p-3.5 shadow-sm transition-[border-color,box-shadow] duration-[120ms] ease-domar hover:border-border-strong hover:shadow-md active:bg-surface-2"
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted">
-          <JobTypeIcon type={job.type} size={14} className="text-subtle" />
-          {t(job.type)}
+        <span className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted">
+            <JobTypeIcon type={job.type} size={14} className="text-subtle" />
+            {t(job.type)}
+          </span>
+          <PriceTypeBadge job={job} />
         </span>
         <StatusBadge status={job.status} />
       </div>

@@ -217,6 +217,11 @@
     "save": "Save price",
     "negotiable": "Negotiable (open for bids)",
     "negotiableHint": "Workers bid on the price; you accept one.",
+    "short": {
+      "FIXED": "Fixed",
+      "HOURLY": "Hourly",
+      "NEGOTIABLE": "Negotiable"
+    },
     "line": {
       "fixed": "Fixed price",
       "rate": "Hourly rate",

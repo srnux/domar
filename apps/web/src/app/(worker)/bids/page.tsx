@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { HandCoins } from "lucide-react";
 import { BidForm } from "@/components/BidForm";
 import { JobTypeIcon } from "@/components/JobTypeIcon";
+import { PriceTypeBadge } from "@/components/PriceTypeBadge";
 import { useMe } from "@/lib/auth";
 import { workerMatchesJobType } from "@/lib/assign";
 import { useOpenBidJobs } from "@/lib/bids";
@@ -40,9 +41,12 @@ export default function BidsPage() {
       <div className="flex flex-col gap-4">
         {eligible.map((job) => (
           <Card key={job.id} className="p-4">
-            <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted">
-              <JobTypeIcon type={job.type} size={14} className="text-subtle" />
-              {tj(job.type)}
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted">
+                <JobTypeIcon type={job.type} size={14} className="text-subtle" />
+                {tj(job.type)}
+              </span>
+              <PriceTypeBadge job={job} />
             </div>
             <h3 className="mt-1.5 font-semibold text-fg">{job.title}</h3>
             <p className="text-sm tabular-nums text-muted">

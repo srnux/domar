@@ -9,6 +9,7 @@ import { formatTimeRange } from "@/lib/dates";
 import { useTransitionJob, useWorkers } from "@/lib/jobs";
 import { StatusBadge } from "./StatusBadge";
 import { JobTypeIcon } from "./JobTypeIcon";
+import { PriceTypeBadge } from "./PriceTypeBadge";
 import { Button, buttonClass, Select } from "@/components/ui";
 
 /**
@@ -35,9 +36,12 @@ export function AttentionCard({ job }: { job: JobDto }) {
     <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface-2 p-3.5">
       <div className="flex items-center gap-2">
         <StatusBadge status={job.status} />
-        <span className="ml-auto inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted">
-          <JobTypeIcon type={job.type} size={13} className="text-subtle" />
-          {tType(job.type)}
+        <span className="ml-auto flex items-center gap-3">
+          <PriceTypeBadge job={job} size={13} />
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted">
+            <JobTypeIcon type={job.type} size={13} className="text-subtle" />
+            {tType(job.type)}
+          </span>
         </span>
       </div>
 

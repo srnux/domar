@@ -25,7 +25,9 @@ import { normalizeEmail } from '../auth/email.util';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
+import { LicenseService } from '../license/license.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { TenantContextService } from '../prisma/tenant-context.service';
 
 const INVITE_TTL_MS = 7 * 24 * 3600_000;
 
@@ -67,12 +69,18 @@ export class InvitesController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly tenantContext: TenantContextService,
+    private readonly license: LicenseService,
   ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPERVISOR')
   async create(@Body() dto: CreateInviteDto) {
+    const companyId = this.tenantContext.getCompanyIdOrThrow();
+
+    // Email is globally unique; findUnique (unique-where, unscoped) catches an
+    // account that exists in any tenant, which acceptance would otherwise reject.
     const existing = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -80,7 +88,11 @@ export class InvitesController {
       throw new BadRequestException('A user with this email already exists');
     }
 
-    // a fresh invite supersedes older ones for the same address
+    // UX guard: block before reserving a seat the company can't afford.
+    await this.license.assertCanAddSeat(companyId, dto.role);
+
+    // a fresh invite supersedes older ones for the same address (deleteMany is
+    // tenant-scoped by the extension, so only this company's invites are cleared)
     await this.prisma.invite.deleteMany({ where: { email: dto.email } });
 
     const token = randomBytes(32).toString('base64url');
@@ -89,6 +101,7 @@ export class InvitesController {
         email: dto.email,
         role: dto.role,
         skills: dto.skills ?? [],
+        companyId,
         tokenHash: hash(token),
         expiresAt: new Date(Date.now() + INVITE_TTL_MS),
       },
@@ -123,22 +136,31 @@ export class InvitesController {
     const invite = await this.findValid(token);
 
     const passwordHash = await argon2.hash(dto.password);
-    await this.prisma.$transaction([
-      this.prisma.user.create({
+    // Acceptance is public (no tenant context), so companyId comes from the
+    // invite and queries are passed companyId explicitly.
+    await this.prisma.$transaction(async (tx) => {
+      // Authoritative seat re-check: the invite may have sat for days while
+      // other seats filled. Exclude this invite (it's about to be consumed).
+      await this.license.assertCanAddSeat(invite.companyId, invite.role, {
+        client: tx,
+        excludeInviteId: invite.id,
+      });
+      await tx.user.create({
         data: {
           email: invite.email,
           name: dto.name,
           phone: dto.phone,
           role: invite.role,
           skills: invite.skills,
+          companyId: invite.companyId,
           passwordHash,
         },
-      }),
-      this.prisma.invite.update({
+      });
+      await tx.invite.update({
         where: { id: invite.id },
         data: { consumedAt: new Date() },
-      }),
-    ]);
+      });
+    });
     return { ok: true };
   }
 }

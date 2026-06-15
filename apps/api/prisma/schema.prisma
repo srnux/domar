@@ -14,6 +14,46 @@ enum Role {
   OWNER
 }
 
+enum CompanyStatus {
+  ACTIVE // staff can log in and operate normally
+  SUSPENDED // login blocked, sessions cannot refresh (e.g. non-payment)
+}
+
+/// A tenant: a property-care company. All operational data is scoped to a Company.
+model Company {
+  id              String        @id @default(uuid())
+  name            String
+  status          CompanyStatus @default(ACTIVE)
+  /// Free-text plan label set by a platform admin (no self-serve tiers in MVP).
+  plan            String?
+  /// License cap: max active SUPERVISOR+WORKER users. Owners are not counted.
+  maxSeats        Int
+  /// Monthly fee in minor units; invoiced offline (no payment processing in MVP).
+  monthlyFeeCents Int           @default(0)
+  /// Account-owner (initially the first supervisor). Transferable; recoverable by a platform admin.
+  /// Nullable to break the create-order chicken/egg (company → supervisor → set owner).
+  ownerUserId     String?       @unique
+  owner           User?         @relation("CompanyOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+  /// Self-relation for future parent-company hierarchy. Schema hook only — no traversal behavior yet.
+  parentCompanyId String?
+  parent          Company?      @relation("CompanyHierarchy", fields: [parentCompanyId], references: [id], onDelete: SetNull)
+  children        Company[]     @relation("CompanyHierarchy")
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  users         User[]         @relation("CompanyMembers")
+  properties    Property[]
+  jobs          Job[]
+  bills         Bill[]
+  billLineItems BillLineItem[]
+  invites       Invite[]
+  bookings      Booking[]
+  bids          Bid[]
+  refreshTokens RefreshToken[]
+
+  @@index([parentCompanyId])
+}
+
 enum Skill {
   CLEANING
   REPAIR
@@ -85,6 +125,9 @@ model Bid {
   job         Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
   workerId    String
   worker      User      @relation("WorkerBids", fields: [workerId], references: [id], onDelete: Cascade)
+  /// Denormalized tenant (→ Job → companyId); accessed by bare id, so scoped directly.
+  companyId   String
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   priceType   PriceType // FIXED or HOURLY proposal
   /// Total (FIXED) or per-hour rate (HOURLY), in the job's currency (minor units).
   amountCents Int
@@ -95,33 +138,43 @@ model Bid {
 
   @@unique([jobId, workerId])
   @@index([jobId])
+  @@index([companyId])
 }
 
 model User {
-  id             String   @id @default(uuid())
-  email          String   @unique
-  passwordHash   String
-  name           String
-  phone          String?
-  role           Role
-  skills         Skill[]  @default([])
-  locale         String   @default("en")
-  isActive       Boolean  @default(true)
-  avatarFilename String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String   @id @default(uuid())
+  email           String   @unique
+  passwordHash    String
+  name            String
+  phone           String?
+  role            Role
+  skills          Skill[]  @default([])
+  locale          String   @default("en")
+  isActive        Boolean  @default(true)
+  avatarFilename  String?
+  /// Tenant. Nullable: platform admins belong to no company.
+  companyId       String?
+  company         Company? @relation("CompanyMembers", fields: [companyId], references: [id], onDelete: Cascade)
+  /// Global super-admin above all tenants; has no companyId and bypasses tenant scoping.
+  isPlatformAdmin Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  refreshTokens  RefreshToken[]
-  properties     Property[]      @relation("PropertyOwner")
-  assignedJobs   Job[]           @relation("JobWorker")
-  createdJobs    Job[]           @relation("JobCreator")
-  uploadedPhotos JobPhoto[]
-  comments       JobComment[]
-  activityEvents ActivityEvent[]
-  ratingsReceived JobRating[]   @relation("RatingsReceived")
-  ratingsGiven    JobRating[]   @relation("RatingsGiven")
-  bids            Bid[]         @relation("WorkerBids")
-  createdBills    Bill[]        @relation("BillCreator")
+  /// Back-relation: companies for which this user is the account-owner.
+  ownedCompany    Company?        @relation("CompanyOwner")
+  refreshTokens   RefreshToken[]
+  properties      Property[]      @relation("PropertyOwner")
+  assignedJobs    Job[]           @relation("JobWorker")
+  createdJobs     Job[]           @relation("JobCreator")
+  uploadedPhotos  JobPhoto[]
+  comments        JobComment[]
+  activityEvents  ActivityEvent[]
+  ratingsReceived JobRating[]     @relation("RatingsReceived")
+  ratingsGiven    JobRating[]     @relation("RatingsGiven")
+  bids            Bid[]           @relation("WorkerBids")
+  createdBills    Bill[]          @relation("BillCreator")
+
+  @@index([companyId, role])
 }
 
 model Property {
@@ -133,6 +186,8 @@ model Property {
   accessNotes String?
   ownerId     String?
   owner       User?    @relation("PropertyOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -143,6 +198,7 @@ model Property {
   bills             Bill[]
 
   @@index([ownerId])
+  @@index([companyId])
 }
 
 model ChecklistTemplate {
@@ -179,6 +235,8 @@ model Booking {
   id            String    @id @default(uuid())
   propertyId    String
   property      Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  companyId     String
+  company       Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   /// When the current guest leaves (start of the turnover window).
   checkoutAt    DateTime
   /// When the next guest arrives, if known.
@@ -191,6 +249,7 @@ model Booking {
   updatedAt     DateTime  @updatedAt
 
   @@index([propertyId, checkoutAt])
+  @@index([companyId])
 }
 
 model JobComment {
@@ -261,6 +320,9 @@ model Job {
   id               String      @id @default(uuid())
   propertyId       String
   property         Property    @relation(fields: [propertyId], references: [id])
+  /// Denormalized tenant (Job → Property → companyId) for direct scoping + fast filters.
+  companyId        String
+  company          Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
   type             JobType
   title            String
   description      String?
@@ -300,6 +362,7 @@ model Job {
   @@index([assignedWorkerId, scheduledStart])
   @@index([status])
   @@index([scheduledStart])
+  @@index([companyId, status])
 }
 
 model ActivityEvent {
@@ -323,6 +386,8 @@ model Invite {
   email       String
   role        Role
   skills      Skill[]   @default([])
+  companyId   String
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   tokenHash   String    @unique
   expiresAt   DateTime
   consumedAt  DateTime?
@@ -330,12 +395,15 @@ model Invite {
   createdAt   DateTime  @default(now())
 
   @@index([email])
+  @@index([companyId])
 }
 
 model Bill {
   id          String     @id @default(uuid())
   propertyId  String
   property    Property   @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  companyId   String
+  company     Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
   status      BillStatus @default(DRAFT)
   /// Single currency for the whole bill (ISO 4217). All line items must match.
   currency    String     @default("EUR")
@@ -355,12 +423,16 @@ model Bill {
 
   @@index([propertyId])
   @@index([status])
+  @@index([companyId])
 }
 
 model BillLineItem {
   id              String           @id @default(uuid())
   billId          String
   bill            Bill             @relation(fields: [billId], references: [id], onDelete: Cascade)
+  /// Denormalized tenant (→ Bill → companyId); accessed by bare id, so scoped directly.
+  companyId       String
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
   kind            BillLineItemKind
   /// Set when kind = JOB. SetNull so deleting a job never corrupts a confirmed bill.
   jobId           String?
@@ -376,6 +448,7 @@ model BillLineItem {
 
   @@index([billId])
   @@index([jobId])
+  @@index([companyId])
 }
 
 model RefreshToken {
@@ -383,8 +456,12 @@ model RefreshToken {
   tokenHash String   @unique
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Tenant of the owning user (null for platform admins). Enables bulk-revoke on suspend.
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
 
   @@index([userId])
+  @@index([companyId])
 }

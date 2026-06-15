@@ -10,6 +10,7 @@ import { JwtAuthGuard } from '../src/auth/jwt-auth.guard';
 import { Roles } from '../src/auth/roles.decorator';
 import { RolesGuard } from '../src/auth/roles.guard';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { freshTenant } from './fixtures';
 
 /** Probe routes for guard behavior, not part of the real API surface. */
 @Controller('probe')
@@ -56,6 +57,7 @@ describe('Auth (e2e)', () => {
     prisma = app.get(PrismaService);
     await prisma.refreshToken.deleteMany();
     await prisma.user.deleteMany();
+    await prisma.company.deleteMany();
     const passwordHash = await argon2.hash('Domar123!');
     await prisma.user.createMany({
       data: [
@@ -74,6 +76,8 @@ describe('Auth (e2e)', () => {
         },
       ],
     });
+    const companyId = await freshTenant(prisma);
+    await prisma.user.updateMany({ data: { companyId } });
   });
 
   afterAll(async () => {

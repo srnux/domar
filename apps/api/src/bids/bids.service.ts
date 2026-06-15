@@ -28,7 +28,8 @@ export class BidsService {
 
   /** List bids: supervisor sees all (cheapest first); a worker sees only their own. */
   async list(jobId: string, actor: AccessTokenPayload) {
-    const job = await this.prisma.job.findUnique({
+    // findFirst (not findUnique) so the tenant extension scopes by companyId.
+    const job = await this.prisma.job.findFirst({
       where: { id: jobId },
       select: { id: true },
     });
@@ -57,13 +58,14 @@ export class BidsService {
     if (dto.priceType === PriceType.NEGOTIABLE) {
       throw new BadRequestException('A bid must be FIXED or HOURLY');
     }
-    await this.assertOpenForBids(jobId);
+    const job = await this.assertOpenForBids(jobId);
 
     const bid = await this.prisma.bid.upsert({
       where: { jobId_workerId: { jobId, workerId: actor.sub } },
       create: {
         jobId,
         workerId: actor.sub,
+        companyId: job.companyId,
         priceType: dto.priceType,
         amountCents: dto.amountCents,
         message: dto.message,
@@ -81,7 +83,8 @@ export class BidsService {
 
   /** Worker withdraws their own bid (hard delete so they can re-bid cleanly). */
   async withdraw(jobId: string, bidId: string, actor: AccessTokenPayload) {
-    const bid = await this.prisma.bid.findUnique({ where: { id: bidId } });
+    // findFirst so the extension scopes by companyId before we delete by id.
+    const bid = await this.prisma.bid.findFirst({ where: { id: bidId } });
     if (!bid || bid.jobId !== jobId) throw new NotFoundException();
     if (bid.workerId !== actor.sub) {
       throw new ForbiddenException('You can only withdraw your own bid');
@@ -95,12 +98,13 @@ export class BidsService {
    * assigned to that worker (OPEN → ASSIGNED), and the other bids are rejected.
    */
   async accept(jobId: string, bidId: string, actor: AccessTokenPayload) {
-    const job = await this.prisma.job.findUnique({ where: { id: jobId } });
+    // findFirst so the extension scopes both lookups by companyId.
+    const job = await this.prisma.job.findFirst({ where: { id: jobId } });
     if (!job) throw new NotFoundException();
     if (job.status !== JobStatus.OPEN || job.priceType !== PriceType.NEGOTIABLE) {
       throw new BadRequestException('Job is not open for bids');
     }
-    const bid = await this.prisma.bid.findUnique({ where: { id: bidId } });
+    const bid = await this.prisma.bid.findFirst({ where: { id: bidId } });
     if (!bid || bid.jobId !== jobId) throw new NotFoundException();
 
     await this.prisma.$transaction([
@@ -135,13 +139,16 @@ export class BidsService {
   }
 
   private async assertOpenForBids(jobId: string) {
-    const job = await this.prisma.job.findUnique({
+    // findFirst so the extension scopes by companyId; returns the job's tenant
+    // so the bid can be stamped with the correct companyId.
+    const job = await this.prisma.job.findFirst({
       where: { id: jobId },
-      select: { status: true, priceType: true },
+      select: { companyId: true, status: true, priceType: true },
     });
     if (!job) throw new NotFoundException();
     if (job.status !== JobStatus.OPEN || job.priceType !== PriceType.NEGOTIABLE) {
       throw new BadRequestException('Job is not open for bids');
     }
+    return job;
   }
 }

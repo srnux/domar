@@ -6,6 +6,7 @@ import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { freshTenant } from './fixtures';
 
 describe('Jobs & Properties (e2e)', () => {
   let app: INestApplication<App>;
@@ -39,6 +40,7 @@ describe('Jobs & Properties (e2e)', () => {
     await prisma.property.deleteMany();
     await prisma.refreshToken.deleteMany();
     await prisma.user.deleteMany();
+    await prisma.company.deleteMany();
 
     const passwordHash = await argon2.hash('Domar123!');
     await prisma.user.createMany({
@@ -72,6 +74,8 @@ describe('Jobs & Properties (e2e)', () => {
         { email: 'lena@domar.test', passwordHash, name: 'Lena', role: 'OWNER' },
       ],
     });
+    const companyId = await freshTenant(prisma);
+    await prisma.user.updateMany({ data: { companyId } });
     const users = await prisma.user.findMany();
     const idOf = (email: string) => users.find((u) => u.email === email)!.id;
     markoId = idOf('marko@domar.test');
@@ -83,6 +87,7 @@ describe('Jobs & Properties (e2e)', () => {
         address: 'Borik 1, Zadar',
         accessNotes: 'Key box 1234',
         ownerId: idOf('klaus@domar.test'),
+        companyId,
       },
     });
     villaId = villa.id;
@@ -91,6 +96,7 @@ describe('Jobs & Properties (e2e)', () => {
         name: 'Studio Kolovare',
         address: 'Kolovare 5, Zadar',
         ownerId: idOf('lena@domar.test'),
+        companyId,
       },
     });
     studioId = studio.id;

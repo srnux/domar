@@ -11,6 +11,10 @@ export interface UserDto {
   locale: string;
   isActive: boolean;
   avatarFilename: string | null;
+  /** Tenant the user belongs to; null for platform admins. */
+  companyId: string | null;
+  /** Global super-admin (manages companies); routes to the /admin area. */
+  isPlatformAdmin: boolean;
   /** Average 1–5 rating across this worker's rated jobs; null when unrated. Workers only. */
   avgScore: number | null;
   /** Number of rated jobs backing avgScore. Workers only. */

@@ -105,7 +105,8 @@ export class JobsService {
       );
     }
 
-    const property = await this.prisma.property.findUnique({
+    // findFirst so the tenant extension scopes by companyId.
+    const property = await this.prisma.property.findFirst({
       where: { id: dto.propertyId },
     });
     if (!property || !property.isActive) {
@@ -140,6 +141,7 @@ export class JobsService {
     const job = await this.prisma.job.create({
       data: {
         propertyId: dto.propertyId,
+        companyId: property.companyId,
         type: dto.type,
         title: dto.title,
         description: dto.description,
@@ -218,7 +220,7 @@ export class JobsService {
 
       const propertyId = dto.propertyId ?? job.propertyId;
       if (dto.propertyId !== undefined && dto.propertyId !== job.propertyId) {
-        const property = await this.prisma.property.findUnique({
+        const property = await this.prisma.property.findFirst({
           where: { id: dto.propertyId },
         });
         if (!property || !property.isActive) {
@@ -470,7 +472,9 @@ export class JobsService {
   }
 
   private async assertActiveWorker(workerId: string) {
-    const worker = await this.prisma.user.findUnique({
+    // findFirst so the extension scopes by companyId — a supervisor can only
+    // assign workers from their own company.
+    const worker = await this.prisma.user.findFirst({
       where: { id: workerId },
     });
     if (!worker || worker.role !== Role.WORKER || !worker.isActive) {

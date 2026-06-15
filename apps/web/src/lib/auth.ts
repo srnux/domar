@@ -15,6 +15,11 @@ export const ROLE_HOME: Record<Role, string> = {
   OWNER: "/properties",
 };
 
+/** Landing route for a user — platform admins go to the admin area. */
+export function homeFor(user: Pick<UserDto, "role" | "isPlatformAdmin">): string {
+  return user.isPlatformAdmin ? "/admin" : ROLE_HOME[user.role];
+}
+
 export function useMe() {
   return useQuery<UserDto, ApiError>({
     queryKey: ["me"],

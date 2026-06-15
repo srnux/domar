@@ -77,7 +77,8 @@ export class BillsService {
   }
 
   async create(dto: CreateBillDto, actor: AccessTokenPayload) {
-    const property = await this.prisma.property.findUnique({
+    // findFirst so the extension scopes by companyId.
+    const property = await this.prisma.property.findFirst({
       where: { id: dto.propertyId },
     });
     if (!property) throw new BadRequestException('Unknown property');
@@ -88,6 +89,7 @@ export class BillsService {
     const bill = await this.prisma.bill.create({
       data: {
         propertyId: dto.propertyId,
+        companyId: property.companyId,
         currency,
         taxRateBps: dto.taxRateBps ?? null,
         notes: dto.notes ?? null,
@@ -95,6 +97,7 @@ export class BillsService {
         lineItems: {
           create: eligible.map((job, i) => ({
             ...this.jobToLine(job),
+            companyId: property.companyId,
             sortOrder: i,
           })),
         },
@@ -162,6 +165,7 @@ export class BillsService {
     await this.prisma.billLineItem.createMany({
       data: jobs.map((job, i) => ({
         billId: id,
+        companyId: bill.companyId,
         ...this.jobToLine(job),
         sortOrder: start + i,
       })),
@@ -175,6 +179,7 @@ export class BillsService {
     await this.prisma.billLineItem.create({
       data: {
         billId: id,
+        companyId: bill.companyId,
         kind: BillLineItemKind.ADDITIONAL,
         label: dto.label,
         unitAmountCents: dto.unitAmountCents,
@@ -258,7 +263,8 @@ export class BillsService {
   // --- helpers -------------------------------------------------------------
 
   private async reload(id: string) {
-    const bill = await this.prisma.bill.findUniqueOrThrow({
+    // findFirstOrThrow so the extension scopes by companyId.
+    const bill = await this.prisma.bill.findFirstOrThrow({
       where: { id },
       include: billInclude,
     });
@@ -266,7 +272,9 @@ export class BillsService {
   }
 
   private async assertDraft(id: string) {
-    const bill = await this.prisma.bill.findUnique({
+    // findFirst so the extension scopes by companyId — the tenant gate for all
+    // mutating bill operations that subsequently update/delete by bare id.
+    const bill = await this.prisma.bill.findFirst({
       where: { id },
       include: billInclude,
     });

@@ -6,6 +6,7 @@ import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { freshTenant } from './fixtures';
 
 describe('Comments & Verification (e2e)', () => {
   let app: INestApplication<App>;
@@ -40,6 +41,7 @@ describe('Comments & Verification (e2e)', () => {
     await prisma.property.deleteMany();
     await prisma.refreshToken.deleteMany();
     await prisma.user.deleteMany();
+    await prisma.company.deleteMany();
 
     const passwordHash = await argon2.hash('Domar123!');
     await prisma.user.createMany({
@@ -71,6 +73,8 @@ describe('Comments & Verification (e2e)', () => {
         { email: 'lena@domar.test', passwordHash, name: 'Lena', role: 'OWNER' },
       ],
     });
+    const companyId = await freshTenant(prisma);
+    await prisma.user.updateMany({ data: { companyId } });
     const users = await prisma.user.findMany();
     const idOf = (email: string) => users.find((u) => u.email === email)!.id;
     markoId = idOf('marko@domar.test');
@@ -80,6 +84,7 @@ describe('Comments & Verification (e2e)', () => {
           name: 'Villa Borik',
           address: 'Borik 1, Zadar',
           ownerId: idOf('klaus@domar.test'),
+          companyId,
         },
       })
     ).id;

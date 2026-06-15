@@ -74,6 +74,8 @@ const workers: UserDto[] = [
     locale: "en",
     isActive: true,
     avatarFilename: null,
+    companyId: "c-1",
+    isPlatformAdmin: false,
     avgScore: null,
     ratingCount: 0,
     createdAt: "2026-01-01T00:00:00.000Z",

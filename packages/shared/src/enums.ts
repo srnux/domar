@@ -99,3 +99,11 @@ export const ActivityType = {
   STATUS_CHANGED: 'STATUS_CHANGED',
 } as const;
 export type ActivityType = (typeof ActivityType)[keyof typeof ActivityType];
+
+export const CompanyStatus = {
+  /** Active tenant — staff can log in and operate normally. */
+  ACTIVE: 'ACTIVE',
+  /** Suspended (e.g. non-payment) — login blocked, sessions cannot refresh. */
+  SUSPENDED: 'SUSPENDED',
+} as const;
+export type CompanyStatus = (typeof CompanyStatus)[keyof typeof CompanyStatus];

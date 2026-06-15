@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { ROLE_HOME, useLogin } from "@/lib/auth";
+import { homeFor, useLogin } from "@/lib/auth";
 import { Button, Card, Field, Input } from "@/components/ui";
 import { BrandMark } from "@/components/ui";
 
@@ -18,7 +18,7 @@ export default function LoginPage() {
     e.preventDefault();
     login.mutate(
       { email, password },
-      { onSuccess: (user) => router.replace(ROLE_HOME[user.role]) },
+      { onSuccess: (user) => router.replace(homeFor(user)) },
     );
   }
 

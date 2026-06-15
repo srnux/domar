@@ -97,7 +97,8 @@ export class BookingsController {
 
   @Post()
   async create(@Body() dto: CreateBookingDto) {
-    const property = await this.prisma.property.findUnique({
+    // findFirst so the extension scopes by companyId.
+    const property = await this.prisma.property.findFirst({
       where: { id: dto.propertyId },
     });
     if (!property || !property.isActive) {
@@ -110,6 +111,7 @@ export class BookingsController {
     const booking = await this.prisma.booking.create({
       data: {
         propertyId: dto.propertyId,
+        companyId: property.companyId,
         checkoutAt,
         checkinAt,
         guestNote: dto.guestNote,
@@ -124,11 +126,11 @@ export class BookingsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateBookingDto,
   ) {
-    const booking = await this.prisma.booking.findUnique({ where: { id } });
+    const booking = await this.prisma.booking.findFirst({ where: { id } });
     if (!booking) throw new NotFoundException();
 
     if (dto.turnoverJobId) {
-      const job = await this.prisma.job.findUnique({
+      const job = await this.prisma.job.findFirst({
         where: { id: dto.turnoverJobId },
       });
       if (!job || job.propertyId !== booking.propertyId) {
@@ -161,7 +163,7 @@ export class BookingsController {
 
   @Delete(':id')
   async remove(@Param('id', ParseUUIDPipe) id: string) {
-    const booking = await this.prisma.booking.findUnique({ where: { id } });
+    const booking = await this.prisma.booking.findFirst({ where: { id } });
     if (!booking) throw new NotFoundException();
     await this.prisma.booking.delete({ where: { id } });
     return { ok: true };

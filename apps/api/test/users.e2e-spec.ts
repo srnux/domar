@@ -6,6 +6,7 @@ import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { freshTenant } from './fixtures';
 
 describe('Users (e2e)', () => {
   let app: INestApplication<App>;
@@ -23,6 +24,7 @@ describe('Users (e2e)', () => {
     await prisma.job.deleteMany();
     await prisma.refreshToken.deleteMany();
     await prisma.user.deleteMany();
+    await prisma.company.deleteMany();
     const passwordHash = await argon2.hash('Domar123!');
     await prisma.user.createMany({
       data: [
@@ -54,6 +56,8 @@ describe('Users (e2e)', () => {
         },
       ],
     });
+    const companyId = await freshTenant(prisma);
+    await prisma.user.updateMany({ data: { companyId } });
 
     const jarFor = async (email: string) => {
       const res = await request(app.getHttpServer())

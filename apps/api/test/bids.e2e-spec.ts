@@ -6,6 +6,7 @@ import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { freshTenant } from './fixtures';
 
 describe('Bids (e2e)', () => {
   let app: INestApplication<App>;
@@ -37,6 +38,7 @@ describe('Bids (e2e)', () => {
     await prisma.property.deleteMany();
     await prisma.refreshToken.deleteMany();
     await prisma.user.deleteMany();
+    await prisma.company.deleteMany();
 
     const passwordHash = await argon2.hash('Domar123!');
     await prisma.user.createMany({
@@ -59,11 +61,18 @@ describe('Bids (e2e)', () => {
         { email: 'klaus@domar.test', passwordHash, name: 'Klaus', role: 'OWNER' },
       ],
     });
+    const companyId = await freshTenant(prisma);
+    await prisma.user.updateMany({ data: { companyId } });
     const owner = await prisma.user.findUniqueOrThrow({
       where: { email: 'klaus@domar.test' },
     });
     const property = await prisma.property.create({
-      data: { name: 'Villa Borik', address: 'Borik 1, Zadar', ownerId: owner.id },
+      data: {
+        name: 'Villa Borik',
+        address: 'Borik 1, Zadar',
+        ownerId: owner.id,
+        companyId,
+      },
     });
     propertyId = property.id;
 

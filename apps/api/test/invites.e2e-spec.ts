@@ -6,10 +6,12 @@ import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { freshTenant } from './fixtures';
 
 describe('Invites & User management (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
+  let companyId: string;
 
   const jars = new Map<string, string>();
   const asUser = (email: string) => ({
@@ -36,6 +38,7 @@ describe('Invites & User management (e2e)', () => {
     await prisma.property.deleteMany();
     await prisma.refreshToken.deleteMany();
     await prisma.user.deleteMany();
+    await prisma.company.deleteMany();
 
     const passwordHash = await argon2.hash('Domar123!');
     await prisma.user.createMany({
@@ -54,6 +57,8 @@ describe('Invites & User management (e2e)', () => {
         },
       ],
     });
+    companyId = await freshTenant(prisma);
+    await prisma.user.updateMany({ data: { companyId } });
 
     for (const email of ['ana@domar.test', 'marko@domar.test']) {
       const res = await request(app.getHttpServer())
@@ -221,10 +226,10 @@ describe('Invites & User management (e2e)', () => {
         where: { email: 'klaus@domar.test' },
       });
       await prisma.property.create({
-        data: { name: 'Villa K', address: 'K 1', ownerId: klaus.id },
+        data: { name: 'Villa K', address: 'K 1', ownerId: klaus.id, companyId },
       });
       await prisma.property.create({
-        data: { name: 'Villa Other', address: 'O 1' },
+        data: { name: 'Villa Other', address: 'O 1', companyId },
       });
 
       const login = await request(app.getHttpServer())

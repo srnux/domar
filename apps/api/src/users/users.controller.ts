@@ -24,6 +24,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { AuthenticatedRequest } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
+import { LicenseService } from '../license/license.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 class ListUsersQuery {
@@ -60,7 +61,10 @@ class UpdateUserDto {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('SUPERVISOR')
 export class UsersController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly license: LicenseService,
+  ) {}
 
   @Get()
   async list(@Query() query: ListUsersQuery) {
@@ -103,8 +107,13 @@ export class UsersController {
     if (id === req.user.sub && dto.isActive === false) {
       throw new BadRequestException('You cannot deactivate yourself');
     }
-    const user = await this.prisma.user.findUnique({ where: { id } });
+    // findFirst so the extension scopes by companyId before update-by-id.
+    const user = await this.prisma.user.findFirst({ where: { id } });
     if (!user) throw new NotFoundException();
+    // Reactivating a staff member consumes a seat — enforce the cap.
+    if (dto.isActive === true && !user.isActive && user.companyId) {
+      await this.license.assertCanAddSeat(user.companyId, user.role);
+    }
     return this.prisma.user.update({
       where: { id },
       data: dto,

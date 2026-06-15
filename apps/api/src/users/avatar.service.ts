@@ -29,7 +29,7 @@ export class AvatarService {
       throw new BadRequestException('File is not a JPEG, PNG, or WebP image');
     }
 
-    const current = await this.prisma.user.findUnique({
+    const current = await this.prisma.user.findFirst({
       where: { id: userId },
       select: { avatarFilename: true },
     });
@@ -56,7 +56,9 @@ export class AvatarService {
   async stream(
     userId: string,
   ): Promise<{ stream: Readable; mimeType: string }> {
-    const user = await this.prisma.user.findUnique({
+    // findFirst so the extension scopes by companyId — avatars don't stream
+    // across tenants.
+    const user = await this.prisma.user.findFirst({
       where: { id: userId },
       select: { avatarFilename: true },
     });

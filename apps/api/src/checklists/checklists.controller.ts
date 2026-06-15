@@ -26,6 +26,7 @@ import type { AuthenticatedRequest } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { PrismaService } from '../prisma/prisma.service';
+import { TenantContextService } from '../prisma/tenant-context.service';
 
 class ToggleItemDto {
   @IsBoolean()
@@ -53,7 +54,10 @@ class UpsertTemplateDto {
 @Controller()
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ChecklistsController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly tenantContext: TenantContextService,
+  ) {}
 
   /** Toggle a job checklist item — assigned worker or supervisor only. */
   @Patch('checklist-items/:id')
@@ -62,12 +66,17 @@ export class ChecklistsController {
     @Body() dto: ToggleItemDto,
     @Req() req: AuthenticatedRequest,
   ) {
+    // ChecklistItem is transitive (no companyId), so scope through the parent
+    // job's company explicitly.
     const item = await this.prisma.checklistItem.findFirst({
       where: {
         id,
-        ...(req.user.role === Role.SUPERVISOR
-          ? {}
-          : { job: { assignedWorkerId: req.user.sub } }),
+        job: {
+          companyId: this.tenantContext.getCompanyIdOrThrow(),
+          ...(req.user.role === Role.SUPERVISOR
+            ? {}
+            : { assignedWorkerId: req.user.sub }),
+        },
       },
     });
     if (!item) throw new NotFoundException();
@@ -92,7 +101,8 @@ export class ChecklistsController {
     @Body(new ValidationPipe({ whitelist: true, transform: true }))
     dto: UpsertTemplateDto,
   ) {
-    const property = await this.prisma.property.findUnique({
+    // findFirst so the extension scopes by companyId.
+    const property = await this.prisma.property.findFirst({
       where: { id: propertyId },
     });
     if (!property) throw new NotFoundException();

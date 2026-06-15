@@ -13,6 +13,9 @@ export interface AuthTokens {
 export interface AccessTokenPayload {
   sub: string;
   role: Role;
+  /** Tenant. Null for platform admins. */
+  companyId: string | null;
+  isPlatformAdmin: boolean;
 }
 
 const REFRESH_TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000;
@@ -35,7 +38,24 @@ export class AuthService {
     if (!passwordOk) {
       throw new UnauthorizedException('Invalid credentials');
     }
+    await this.assertCompanyActive(user.companyId);
     return this.issueTokens(user);
+  }
+
+  /**
+   * Blocks login/refresh for suspended tenants. Platform admins (no companyId)
+   * are unaffected. Combined with revoking refresh tokens on suspend, this caps
+   * the suspension staleness window at one access-token TTL.
+   */
+  private async assertCompanyActive(companyId: string | null): Promise<void> {
+    if (!companyId) return;
+    const company = await this.prisma.company.findUnique({
+      where: { id: companyId },
+      select: { status: true },
+    });
+    if (!company || company.status !== 'ACTIVE') {
+      throw new UnauthorizedException('Company account is suspended');
+    }
   }
 
   async refresh(refreshToken: string): Promise<AuthTokens> {
@@ -51,6 +71,7 @@ export class AuthService {
     if (!user || !user.isActive) {
       throw new UnauthorizedException('Invalid refresh token');
     }
+    await this.assertCompanyActive(user.companyId);
     // Rotation: the presented token is consumed, a fresh one replaces it.
     await this.prisma.refreshToken.delete({ where: { id: stored.id } });
     return this.issueTokens(user);
@@ -63,7 +84,12 @@ export class AuthService {
   }
 
   private async issueTokens(user: User): Promise<AuthTokens> {
-    const payload: AccessTokenPayload = { sub: user.id, role: user.role };
+    const payload: AccessTokenPayload = {
+      sub: user.id,
+      role: user.role,
+      companyId: user.companyId,
+      isPlatformAdmin: user.isPlatformAdmin,
+    };
     const accessToken = await this.jwt.signAsync(payload);
 
     const refreshToken = randomBytes(48).toString('base64url');
@@ -71,6 +97,9 @@ export class AuthService {
       data: {
         tokenHash: this.hash(refreshToken),
         userId: user.id,
+        // Set explicitly: login/refresh run with no tenant context, so the
+        // extension can't auto-inject. Enables bulk-revoke on suspend.
+        companyId: user.companyId,
         expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
       },
     });

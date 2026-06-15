@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { ROLE_HOME, useMe } from "@/lib/auth";
+import { homeFor, useMe } from "@/lib/auth";
 import { PageSpinner } from "@/components/ui";
 
 export default function Home() {
@@ -11,7 +11,7 @@ export default function Home() {
 
   useEffect(() => {
     if (isError) router.replace("/login");
-    else if (me) router.replace(ROLE_HOME[me.role]);
+    else if (me) router.replace(homeFor(me));
   }, [me, isError, router]);
 
   return (

@@ -9,10 +9,12 @@ import { BillsModule } from './bills/bills.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { ChecklistsModule } from './checklists/checklists.module';
 import { CommentsModule } from './comments/comments.module';
+import { DevicesModule } from './devices/devices.module';
 import { HealthController } from './health/health.controller';
 import { InvitesModule } from './invites/invites.module';
 import { JobsModule } from './jobs/jobs.module';
 import { LicenseModule } from './license/license.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { PhotosModule } from './photos/photos.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PropertiesModule } from './properties/properties.module';
@@ -38,6 +40,8 @@ import { UsersModule } from './users/users.module';
     InvitesModule,
     ActivityModule,
     AdminModule,
+    NotificationsModule,
+    DevicesModule,
   ],
   controllers: [HealthController],
 })

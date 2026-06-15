@@ -8,3 +8,4 @@ job lists - gruped cards per state, ordered cronologically
 reccuring jobs
 tipping workers
 customer/owner billing
+Background location for worker mobile

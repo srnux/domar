@@ -1,0 +1,11 @@
+@import "./globals.css";
+
+/*
+ * The web app injects these via next/font; the mobile app has no next/font, so
+ * define them here. Bundled web fonts can be added later — system fonts fall
+ * back cleanly through the existing --font-sans / --font-mono chains.
+ */
+:root {
+  --font-inter: "Inter";
+  --font-mono-jb: "JetBrains Mono";
+}

@@ -14,6 +14,13 @@ export interface AuthenticatedRequest extends Request {
   user: AccessTokenPayload;
 }
 
+/** Native clients (no cookie jar) send the access token as a Bearer header. */
+function bearerOf(req: Request): string | undefined {
+  const header = req.headers.authorization;
+  if (!header?.startsWith('Bearer ')) return undefined;
+  return header.slice('Bearer '.length).trim() || undefined;
+}
+
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   constructor(
@@ -23,9 +30,9 @@ export class JwtAuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    const token = (req.cookies as Record<string, string> | undefined)?.[
-      ACCESS_COOKIE
-    ];
+    const token =
+      bearerOf(req) ??
+      (req.cookies as Record<string, string> | undefined)?.[ACCESS_COOKIE];
     if (!token) {
       throw new UnauthorizedException('Missing access token');
     }

@@ -184,6 +184,114 @@ describe('Auth (e2e)', () => {
     });
   });
 
+  describe('mobile (Bearer) flow', () => {
+    const mobileLogin = (email = 'ana@domar.test', password = 'Domar123!') =>
+      request(app.getHttpServer())
+        .post('/api/auth/login')
+        .set('X-Client', 'mobile')
+        .send({ email, password });
+
+    it('returns access and refresh tokens in the body for mobile clients', async () => {
+      const res = await mobileLogin().expect(200);
+      expect(res.body.email).toBe('ana@domar.test');
+      expect(typeof res.body.accessToken).toBe('string');
+      expect(typeof res.body.refreshToken).toBe('string');
+      expect(res.body.passwordHash).toBeUndefined();
+    });
+
+    it('does not leak tokens in the body for web clients', async () => {
+      const res = await login().expect(200);
+      expect(res.body.accessToken).toBeUndefined();
+      expect(res.body.refreshToken).toBeUndefined();
+    });
+
+    it('authenticates a guarded route with a Bearer access token', async () => {
+      const { accessToken } = (await mobileLogin()).body;
+
+      const res = await request(app.getHttpServer())
+        .get('/api/auth/me')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+
+      expect(res.body.email).toBe('ana@domar.test');
+    });
+
+    it('rotates a refresh token presented in the body', async () => {
+      const { refreshToken } = (await mobileLogin()).body;
+
+      const res = await request(app.getHttpServer())
+        .post('/api/auth/refresh')
+        .set('X-Client', 'mobile')
+        .send({ refreshToken })
+        .expect(200);
+
+      expect(typeof res.body.accessToken).toBe('string');
+      expect(typeof res.body.refreshToken).toBe('string');
+      expect(res.body.refreshToken).not.toBe(refreshToken);
+
+      // the consumed refresh token must be rejected
+      await request(app.getHttpServer())
+        .post('/api/auth/refresh')
+        .set('X-Client', 'mobile')
+        .send({ refreshToken })
+        .expect(401);
+    });
+
+    it('revokes a body-presented refresh token on logout', async () => {
+      const { refreshToken } = (await mobileLogin()).body;
+
+      await request(app.getHttpServer())
+        .post('/api/auth/logout')
+        .send({ refreshToken })
+        .expect(200);
+
+      await request(app.getHttpServer())
+        .post('/api/auth/refresh')
+        .send({ refreshToken })
+        .expect(401);
+    });
+  });
+
+  describe('POST/DELETE /api/devices', () => {
+    it('registers and unregisters a device token for the user', async () => {
+      const jar = cookieJar(await login('marko@domar.test'));
+      const token = 'fcm-test-token-123';
+
+      await request(app.getHttpServer())
+        .post('/api/devices')
+        .set('Cookie', jar)
+        .send({ token, platform: 'android' })
+        .expect(200);
+
+      const stored = await prisma.deviceToken.findUnique({ where: { token } });
+      expect(stored?.platform).toBe('android');
+
+      await request(app.getHttpServer())
+        .delete(`/api/devices/${token}`)
+        .set('Cookie', jar)
+        .expect(200);
+
+      const gone = await prisma.deviceToken.findUnique({ where: { token } });
+      expect(gone).toBeNull();
+    });
+
+    it('rejects an unauthenticated registration with 401', async () => {
+      await request(app.getHttpServer())
+        .post('/api/devices')
+        .send({ token: 'x', platform: 'android' })
+        .expect(401);
+    });
+
+    it('rejects an invalid platform with 400', async () => {
+      const jar = cookieJar(await login('marko@domar.test'));
+      await request(app.getHttpServer())
+        .post('/api/devices')
+        .set('Cookie', jar)
+        .send({ token: 'y', platform: 'windows-phone' })
+        .expect(400);
+    });
+  });
+
   describe('role guard', () => {
     it('lets a supervisor into a supervisor-only route', async () => {
       const jar = cookieJar(await login('ana@domar.test'));

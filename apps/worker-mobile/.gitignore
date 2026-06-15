@@ -1,0 +1,21 @@
+dist/
+.env
+.env.local
+*.log
+
+# Native projects are committed (they hold custom config: network security,
+# scheme, etc.), but their build artifacts are not.
+android/build/
+android/.gradle/
+android/app/build/
+android/capacitor-cordova-android-plugins/
+android/local.properties
+android/.idea/
+android/captures/
+android/*.iml
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
+ios/App/build/
+ios/App/Pods/
+ios/App/App/public/

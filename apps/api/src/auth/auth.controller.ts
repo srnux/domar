@@ -17,8 +17,9 @@ import {
   clearAuthCookies,
   setAuthCookies,
 } from './auth.cookies';
-import { AuthService } from './auth.service';
+import { AuthService, type AuthTokens } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { RefreshDto } from './dto/refresh.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import type { AuthenticatedRequest } from './jwt-auth.guard';
 
@@ -35,6 +36,15 @@ function refreshCookieOf(req: Request): string | undefined {
   return (req.cookies as Record<string, string> | undefined)?.[REFRESH_COOKIE];
 }
 
+/**
+ * Native clients (Capacitor) have no cookie jar, so they opt in via this header
+ * to also receive the tokens in the response body. Web clients omit it and keep
+ * using the httpOnly cookies set on every response — behavior is unchanged.
+ */
+function wantsBodyTokens(req: Request): boolean {
+  return req.headers['x-client'] === 'mobile';
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -46,39 +56,42 @@ export class AuthController {
   @HttpCode(200)
   async login(
     @Body() dto: LoginDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<SafeUser> {
+  ): Promise<SafeUser & Partial<AuthTokens>> {
     const tokens = await this.auth.login(dto.email, dto.password);
     setAuthCookies(res, tokens);
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { email: dto.email },
       include: { company: { select: { name: true } } },
     });
-    return toSafeUser(user);
+    return { ...toSafeUser(user), ...(wantsBodyTokens(req) ? tokens : {}) };
   }
 
   @Post('refresh')
   @HttpCode(200)
   async refresh(
+    @Body() dto: RefreshDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ ok: true }> {
-    const refreshToken = refreshCookieOf(req);
+  ): Promise<{ ok: true } & Partial<AuthTokens>> {
+    const refreshToken = dto.refreshToken ?? refreshCookieOf(req);
     if (!refreshToken) {
       throw new UnauthorizedException('Missing refresh token');
     }
     const tokens = await this.auth.refresh(refreshToken);
     setAuthCookies(res, tokens);
-    return { ok: true };
+    return { ok: true, ...(wantsBodyTokens(req) ? tokens : {}) };
   }
 
   @Post('logout')
   @HttpCode(200)
   async logout(
+    @Body() dto: RefreshDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ ok: true }> {
-    const refreshToken = refreshCookieOf(req);
+    const refreshToken = dto.refreshToken ?? refreshCookieOf(req);
     if (refreshToken) {
       await this.auth.logout(refreshToken);
     }

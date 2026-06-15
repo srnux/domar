@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CommentVisibility, Prisma, Role } from '@prisma/client';
 import type { AccessTokenPayload } from '../auth/auth.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 const commentSelect = {
@@ -13,7 +14,10 @@ const commentSelect = {
 
 @Injectable()
 export class CommentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   /** Same visibility scope as jobs: worker = assigned, owner = own property. */
   private jobScope(actor: AccessTokenPayload): Prisma.JobWhereInput {
@@ -56,7 +60,7 @@ export class CommentsService {
     actor: AccessTokenPayload,
   ) {
     await this.assertJobVisible(jobId, actor);
-    return this.prisma.jobComment.create({
+    const comment = await this.prisma.jobComment.create({
       data: {
         jobId,
         body,
@@ -67,6 +71,26 @@ export class CommentsService {
         authorId: actor.sub,
       },
       select: commentSelect,
+    });
+    void this.notifyAssignedWorker(jobId, body, actor);
+    return comment;
+  }
+
+  /** Fire-and-forget push to the job's worker when someone else comments. */
+  private async notifyAssignedWorker(
+    jobId: string,
+    body: string,
+    actor: AccessTokenPayload,
+  ): Promise<void> {
+    const job = await this.prisma.job.findUnique({
+      where: { id: jobId },
+      select: { assignedWorkerId: true, title: true },
+    });
+    if (!job?.assignedWorkerId || job.assignedWorkerId === actor.sub) return;
+    await this.notifications.notifyUser(job.assignedWorkerId, {
+      title: `New comment · ${job.title}`,
+      body: body.slice(0, 140),
+      data: { jobId },
     });
   }
 }

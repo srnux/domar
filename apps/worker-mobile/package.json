@@ -1,0 +1,45 @@
+{
+  "name": "@domar/worker-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "tsc --noEmit",
+    "cap:sync": "cap sync",
+    "cap:ios": "cap run ios",
+    "cap:android": "cap run android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7",
+    "@capacitor/app": "^7",
+    "@capacitor/camera": "^7",
+    "@capacitor/core": "^7",
+    "@capacitor/network": "^7",
+    "@capacitor/preferences": "^7",
+    "@capacitor/push-notifications": "^7",
+    "@domar/shared": "workspace:*",
+    "@tanstack/query-async-storage-persister": "^5",
+    "@tanstack/react-query": "^5",
+    "@tanstack/react-query-persist-client": "^5",
+    "capacitor-secure-storage-plugin": "^0.11.0",
+    "lucide-react": "^1.17.0",
+    "next-intl": "^4",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-router": "^7"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7",
+    "@tailwindcss/postcss": "^4",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4",
+    "postcss": "^8",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vite": "^6"
+  }
+}

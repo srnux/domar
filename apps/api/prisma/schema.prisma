@@ -50,6 +50,7 @@ model Company {
   bookings      Booking[]
   bids          Bid[]
   refreshTokens RefreshToken[]
+  deviceTokens  DeviceToken[]
 
   @@index([parentCompanyId])
 }
@@ -163,6 +164,7 @@ model User {
   /// Back-relation: companies for which this user is the account-owner.
   ownedCompany    Company?        @relation("CompanyOwner")
   refreshTokens   RefreshToken[]
+  deviceTokens    DeviceToken[]
   properties      Property[]      @relation("PropertyOwner")
   assignedJobs    Job[]           @relation("JobWorker")
   createdJobs     Job[]           @relation("JobCreator")
@@ -461,6 +463,23 @@ model RefreshToken {
   company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([companyId])
+}
+
+model DeviceToken {
+  id         String   @id @default(uuid())
+  /// FCM (Android) / APNs-via-FCM (iOS) registration token.
+  token      String   @unique
+  platform   String
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Tenant of the owning user (null for platform admins).
+  companyId  String?
+  company    Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @updatedAt
 
   @@index([userId])
   @@index([companyId])

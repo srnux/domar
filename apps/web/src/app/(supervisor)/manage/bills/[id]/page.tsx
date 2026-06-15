@@ -6,6 +6,8 @@ import { useTranslations } from "next-intl";
 import type { BillDto, BillLineItemDto } from "@domar/shared";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { BillStatusBadge } from "@/components/BillStatusBadge";
+import { useBlockNavigation } from "@/components/navigation-blocker";
+import { useGuardedRouter } from "@/components/GuardedLink";
 import {
   useAddJobLines,
   useAddLineItem,
@@ -33,7 +35,7 @@ export default function BillBuilderPage({
 }) {
   const { id } = use(params);
   const t = useTranslations("bills");
-  const router = useRouter();
+  const guarded = useGuardedRouter();
   const { data: bill, isPending } = useBill(id);
 
   if (isPending || !bill) {
@@ -47,7 +49,7 @@ export default function BillBuilderPage({
   return (
     <main className="mx-auto max-w-2xl p-4 sm:p-6">
       <button
-        onClick={() => router.push("/manage/bills")}
+        onClick={() => guarded.push("/manage/bills")}
         className="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-fg"
       >
         <ArrowLeft size={16} aria-hidden /> {t("title")}
@@ -144,6 +146,12 @@ function DraftEditor({ bill }: { bill: BillDto }) {
   // Manual line form
   const [label, setLabel] = useState("");
   const [amount, setAmount] = useState("");
+
+  // Line items already persist on add/remove; only the uncommitted manual-line
+  // input and the unsubmitted job selection would be lost on navigation.
+  const dirty =
+    label.trim() !== "" || amount.trim() !== "" || selected.size > 0;
+  useBlockNavigation(dirty);
   const addManual = (e: React.FormEvent) => {
     e.preventDefault();
     if (!label.trim() || amount.trim() === "") return;

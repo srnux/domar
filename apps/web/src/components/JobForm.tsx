@@ -16,6 +16,8 @@ import {
   type PricingFormValue,
 } from "@/lib/pricing";
 import { PricingFields } from "@/components/PricingFields";
+import { useBlockNavigation } from "@/components/navigation-blocker";
+import { useGuardedRouter } from "@/components/GuardedLink";
 import {
   Button,
   Callout,
@@ -39,6 +41,7 @@ export function JobForm({ job }: { job?: JobDto }) {
   const t = useTranslations("supervisor");
   const tj = useTranslations("jobType");
   const router = useRouter();
+  const guarded = useGuardedRouter();
   const params = useSearchParams();
   const { data: properties } = useProperties();
   const { data: workers } = useWorkers();
@@ -87,6 +90,56 @@ export function JobForm({ job }: { job?: JobDto }) {
   const [pricing, setPricing] = useState<PricingFormValue>(
     job ? pricingFromJob(job) : EMPTY_PRICING,
   );
+
+  // Warn before navigating away from an edit with changes (create is exempt).
+  const dirty = useMemo(() => {
+    if (!isEdit || !job) return false;
+    const initialPricing = pricingFromJob(job);
+    const snapshot = (p: PricingFormValue) =>
+      JSON.stringify({
+        propertyId,
+        type,
+        title,
+        description,
+        date,
+        startTime,
+        endTime,
+        workerId,
+        priceType: p.priceType,
+        amount: p.amount,
+        currency: p.currency,
+        estimatedHours: p.estimatedHours,
+      });
+    // Reuse the same value object for the loaded snapshot by overriding fields.
+    const initial = JSON.stringify({
+      propertyId: job.property.id,
+      type: job.type,
+      title: job.title,
+      description: job.description ?? "",
+      date: toLocalInput(job.scheduledStart, "date"),
+      startTime: toLocalInput(job.scheduledStart, "time"),
+      endTime: toLocalInput(job.scheduledEnd, "time"),
+      workerId: job.assignedWorker?.id ?? "",
+      priceType: initialPricing.priceType,
+      amount: initialPricing.amount,
+      currency: initialPricing.currency,
+      estimatedHours: initialPricing.estimatedHours,
+    });
+    return snapshot(pricing) !== initial;
+  }, [
+    isEdit,
+    job,
+    propertyId,
+    type,
+    title,
+    description,
+    date,
+    startTime,
+    endTime,
+    workerId,
+    pricing,
+  ]);
+  useBlockNavigation(dirty);
 
   const eligibleWorkers = useMemo(
     () => (workers ?? []).filter((w) => workerMatchesJobType(w, type)),
@@ -141,7 +194,7 @@ export function JobForm({ job }: { job?: JobDto }) {
       {isEdit && (
         <button
           type="button"
-          onClick={() => router.push(`/jobs/${job.id}`)}
+          onClick={() => guarded.push(`/jobs/${job.id}`)}
           className="mb-3 inline-flex items-center gap-1.5 self-start text-sm font-medium text-muted hover:text-fg"
         >
           <ArrowLeft size={16} aria-hidden /> {t("back")}

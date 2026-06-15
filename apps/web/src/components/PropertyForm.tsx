@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type {
@@ -12,6 +12,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Camera, Plus, X } from "lucide-react";
 import { ApiError, api } from "@/lib/api-client";
 import { useUsers } from "@/lib/users";
+import { useBlockNavigation } from "@/components/navigation-blocker";
 import { Button, Field, Input, Select, Textarea } from "@/components/ui";
 
 interface TemplateRow {
@@ -38,16 +39,29 @@ export function PropertyForm({ property }: { property?: PropertyDto }) {
     enabled: !!property,
   });
 
+  const initialItems = useMemo<TemplateRow[]>(
+    () =>
+      (template.data ?? []).map((i) => ({
+        text: i.text,
+        photoRequired: i.photoRequired,
+      })),
+    [template.data],
+  );
+
   useEffect(() => {
-    if (template.data) {
-      setItems(
-        template.data.map((i) => ({
-          text: i.text,
-          photoRequired: i.photoRequired,
-        })),
-      );
-    }
-  }, [template.data]);
+    if (template.data) setItems(initialItems);
+  }, [template.data, initialItems]);
+
+  // Warn before navigating away from an edit with changes (create is exempt).
+  const dirty =
+    !!property &&
+    (name !== property.name ||
+      address !== property.address ||
+      accessNotes !== (property.accessNotes ?? "") ||
+      ownerId !== (property.ownerId ?? "") ||
+      isActive !== property.isActive ||
+      JSON.stringify(items) !== JSON.stringify(initialItems));
+  useBlockNavigation(dirty);
 
   const save = useMutation<PropertyDto, ApiError, void>({
     mutationFn: async () => {

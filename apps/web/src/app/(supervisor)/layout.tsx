@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -18,6 +17,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { RequireRole } from "@/components/RequireRole";
+import { GuardedLink } from "@/components/GuardedLink";
+import { useNavigationBlocker } from "@/components/navigation-blocker";
 import { UserMenu } from "@/components/UserMenu";
 import { useLogout } from "@/lib/auth";
 import { useJobs } from "@/lib/jobs";
@@ -54,6 +55,7 @@ export default function SupervisorLayout({
   const t = useTranslations("supervisor");
   const logout = useLogout();
   const router = useRouter();
+  const { guard } = useNavigationBlocker();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const { data: jobs } = useJobs();
@@ -80,21 +82,23 @@ export default function SupervisorLayout({
   };
 
   const signOut = () =>
-    logout.mutate(undefined, { onSettled: () => router.replace("/login") });
+    guard(() =>
+      logout.mutate(undefined, { onSettled: () => router.replace("/login") }),
+    );
 
   return (
     <RequireRole role="SUPERVISOR">
       <div className="min-h-screen bg-bg">
         <header className="dom-frost sticky top-0 z-40 border-b border-border">
           <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3">
-            <Link href="/dashboard" className="shrink-0">
+            <GuardedLink href="/dashboard" className="shrink-0">
               <Brand size={22} />
-            </Link>
+            </GuardedLink>
 
             {/* Desktop nav */}
             <nav className="ml-auto hidden items-center gap-1 md:flex">
               {NAV.map(({ href, key, icon: Icon }) => (
-                <Link
+                <GuardedLink
                   key={href}
                   href={href}
                   aria-current={isActive(href) ? "page" : undefined}
@@ -111,7 +115,7 @@ export default function SupervisorLayout({
                 >
                   {renderIcon(key, Icon, 15)}
                   {t(key)}
-                </Link>
+                </GuardedLink>
               ))}
               <button
                 onClick={signOut}
@@ -139,7 +143,7 @@ export default function SupervisorLayout({
           {open && (
             <nav className="border-t border-border bg-surface px-3 py-2 md:hidden">
               {NAV.map(({ href, key, icon: Icon }) => (
-                <Link
+                <GuardedLink
                   key={href}
                   href={href}
                   onClick={() => setOpen(false)}
@@ -157,7 +161,7 @@ export default function SupervisorLayout({
                 >
                   {renderIcon(key, Icon, 18)}
                   {t(key)}
-                </Link>
+                </GuardedLink>
               ))}
               <button
                 onClick={() => {

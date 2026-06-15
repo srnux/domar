@@ -3,6 +3,12 @@
     "appName": "Domar",
     "tagline": "Property care for holiday rentals"
   },
+  "unsavedChanges": {
+    "title": "Unsaved changes",
+    "body": "You have unsaved changes that will be lost if you leave this page.",
+    "stay": "Stay",
+    "leave": "Leave"
+  },
   "auth": {
     "subtitle": "Sign in to your account",
     "email": "Email",

@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useMe } from "@/lib/auth";
+import { GuardedLink } from "@/components/GuardedLink";
 import { UserAvatar } from "@/components/ui";
 
 /**
@@ -13,7 +13,7 @@ export function UserMenu() {
   if (!me) return null;
 
   return (
-    <Link
+    <GuardedLink
       href="/profile"
       title={me.name}
       aria-label={me.name}
@@ -27,6 +27,6 @@ export function UserMenu() {
       <span className="pointer-events-none absolute right-0 top-full z-50 mt-1.5 hidden whitespace-nowrap rounded-md bg-fg px-2 py-1 text-xs font-medium text-bg shadow-md group-hover:block">
         {me.name}
       </span>
-    </Link>
+    </GuardedLink>
   );
 }

@@ -11,3 +11,4 @@ export { PageHeader } from "./PageHeader";
 export { Segmented } from "./Segmented";
 export { Brand, BrandMark } from "./Brand";
 export { UserAvatar } from "./UserAvatar";
+export { UnsavedChangesDialog } from "./UnsavedChangesDialog";

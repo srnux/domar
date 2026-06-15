@@ -69,6 +69,16 @@ enum BidStatus {
   REJECTED
 }
 
+enum BillStatus {
+  DRAFT // supervisor assembling; invisible to owner
+  CONFIRMED // issued/locked; visible to owner, PDF downloadable
+}
+
+enum BillLineItemKind {
+  JOB // auto-derived worker/job cost; carries jobId
+  ADDITIONAL // manual: management, organization, materials, etc.
+}
+
 model Bid {
   id          String    @id @default(uuid())
   jobId       String
@@ -111,6 +121,7 @@ model User {
   ratingsReceived JobRating[]   @relation("RatingsReceived")
   ratingsGiven    JobRating[]   @relation("RatingsGiven")
   bids            Bid[]         @relation("WorkerBids")
+  createdBills    Bill[]        @relation("BillCreator")
 }
 
 model Property {
@@ -129,6 +140,7 @@ model Property {
   jobs              Job[]
   bookings          Booking[]
   checklistTemplate ChecklistTemplate?
+  bills             Bill[]
 
   @@index([ownerId])
 }
@@ -282,6 +294,7 @@ model Job {
   booking        Booking?
   rating         JobRating?
   bids           Bid[]
+  billLineItems  BillLineItem[]
 
   @@index([propertyId])
   @@index([assignedWorkerId, scheduledStart])
@@ -317,6 +330,52 @@ model Invite {
   createdAt   DateTime  @default(now())
 
   @@index([email])
+}
+
+model Bill {
+  id          String     @id @default(uuid())
+  propertyId  String
+  property    Property   @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  status      BillStatus @default(DRAFT)
+  /// Single currency for the whole bill (ISO 4217). All line items must match.
+  currency    String     @default("EUR")
+  /// Optional VAT rate in basis points (1900 = 19%). null = no tax line.
+  taxRateBps  Int?
+  /// Free-text invoice notes shown on the PDF (payment terms, etc.).
+  notes       String?
+  /// Human-facing reference, assigned at confirm time, e.g. INV-2026-0007.
+  number      String?    @unique
+  createdById String?
+  createdBy   User?      @relation("BillCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  confirmedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  lineItems BillLineItem[]
+
+  @@index([propertyId])
+  @@index([status])
+}
+
+model BillLineItem {
+  id              String           @id @default(uuid())
+  billId          String
+  bill            Bill             @relation(fields: [billId], references: [id], onDelete: Cascade)
+  kind            BillLineItemKind
+  /// Set when kind = JOB. SetNull so deleting a job never corrupts a confirmed bill.
+  jobId           String?
+  job             Job?             @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  /// Snapshot of the description at add-time (job title or manual label).
+  label           String
+  /// Quantity in hundredths (100 = 1.00 unit / 1 hr). FIXED job = 100.
+  quantity        Int              @default(100)
+  /// Net unit amount in minor units. Line total = round(unitAmountCents * quantity / 100).
+  unitAmountCents Int
+  sortOrder       Int              @default(0)
+  createdAt       DateTime         @default(now())
+
+  @@index([billId])
+  @@index([jobId])
 }
 
 model RefreshToken {

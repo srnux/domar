@@ -6,12 +6,14 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type { PropertyDto } from "@domar/shared";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ChevronRight, ClipboardList } from "lucide-react";
+import { ArrowLeft, ChevronRight, ClipboardList, ReceiptText } from "lucide-react";
 import { ApiError, api } from "@/lib/api-client";
 import { StatusBadge } from "@/components/StatusBadge";
 import { JobTypeIcon } from "@/components/JobTypeIcon";
 import { formatDayHeading, localDayKey } from "@/lib/dates";
 import { useJobs } from "@/lib/jobs";
+import { useBills } from "@/lib/bills";
+import { formatMoney } from "@/lib/pricing";
 import { Card, EmptyState, PageSpinner } from "@/components/ui";
 
 export default function OwnerPropertyPage({
@@ -21,16 +23,20 @@ export default function OwnerPropertyPage({
 }) {
   const { id } = use(params);
   const t = useTranslations("owner");
+  const billsT = useTranslations("bills");
   const router = useRouter();
   const { data: property } = useQuery<PropertyDto, ApiError>({
     queryKey: ["properties", id],
     queryFn: () => api(`/api/properties/${id}`),
   });
   const { data: jobs, isPending } = useJobs();
+  const { data: bills } = useBills();
 
   const history = (jobs ?? [])
     .filter((j) => j.property.id === id && j.status !== "CANCELLED")
     .sort((a, b) => (a.scheduledStart < b.scheduledStart ? 1 : -1));
+
+  const propertyBills = (bills ?? []).filter((b) => b.property.id === id);
 
   return (
     <main className="mx-auto max-w-2xl p-4 sm:p-6">
@@ -44,6 +50,31 @@ export default function OwnerPropertyPage({
         {property?.name ?? "…"}
       </h1>
       <p className="mb-6 text-sm text-muted">{property?.address}</p>
+
+      {propertyBills.length > 0 && (
+        <section className="mb-6">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
+            {billsT("title")}
+          </h2>
+          <div className="flex flex-col gap-3">
+            {propertyBills.map((bill) => (
+              <Link key={bill.id} href={`/bills/${bill.id}`} className="block">
+                <Card className="p-4 shadow-sm transition-[border-color,box-shadow] hover:border-border-strong hover:shadow-md">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="flex items-center gap-2 font-semibold text-fg">
+                      <ReceiptText size={15} className="text-subtle" aria-hidden />
+                      {bill.number}
+                    </h3>
+                    <span className="font-medium tabular-nums text-fg">
+                      {formatMoney(bill.grossCents, bill.currency)}
+                    </span>
+                  </div>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
         {t("workHistory")}

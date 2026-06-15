@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  ReceiptText,
   Users,
   X,
   type LucideIcon,
@@ -29,6 +30,7 @@ interface NavItem {
     | "jobs"
     | "verifyQueue"
     | "bookings"
+    | "bills"
     | "properties"
     | "team";
   icon: LucideIcon;
@@ -39,6 +41,7 @@ const NAV: NavItem[] = [
   { href: "/jobs", key: "jobs", icon: Briefcase },
   { href: "/verify", key: "verifyQueue", icon: BadgeCheck },
   { href: "/bookings", key: "bookings", icon: CalendarRange },
+  { href: "/manage/bills", key: "bills", icon: ReceiptText },
   { href: "/manage/properties", key: "properties", icon: Home },
   { href: "/users", key: "team", icon: Users },
 ];

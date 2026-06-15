@@ -53,6 +53,23 @@ export const BidStatus = {
 } as const;
 export type BidStatus = (typeof BidStatus)[keyof typeof BidStatus];
 
+export const BillStatus = {
+  /** Supervisor is still assembling the bill; invisible to the owner. */
+  DRAFT: 'DRAFT',
+  /** Issued and locked; visible to the owner, PDF downloadable. */
+  CONFIRMED: 'CONFIRMED',
+} as const;
+export type BillStatus = (typeof BillStatus)[keyof typeof BillStatus];
+
+export const BillLineItemKind = {
+  /** Auto-derived worker/job cost; carries a jobId. */
+  JOB: 'JOB',
+  /** Manual addition: management, organization, materials, etc. */
+  ADDITIONAL: 'ADDITIONAL',
+} as const;
+export type BillLineItemKind =
+  (typeof BillLineItemKind)[keyof typeof BillLineItemKind];
+
 export const PhotoKind = {
   BEFORE: 'BEFORE',
   AFTER: 'AFTER',

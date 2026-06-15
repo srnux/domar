@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ActivityModule } from './activity/activity.module';
 import { AuthModule } from './auth/auth.module';
 import { BidsModule } from './bids/bids.module';
+import { BillsModule } from './bills/bills.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { ChecklistsModule } from './checklists/checklists.module';
 import { CommentsModule } from './comments/comments.module';
@@ -22,6 +23,7 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     JobsModule,
     BidsModule,
+    BillsModule,
     PropertiesModule,
     UsersModule,
     ChecklistsModule,

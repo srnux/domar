@@ -90,7 +90,7 @@ export default function SupervisorLayout({
     <RequireRole role="SUPERVISOR">
       <div className="min-h-screen bg-bg">
         <header className="dom-frost sticky top-0 z-40 border-b border-border">
-          <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3">
+          <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
             <GuardedLink href="/dashboard" className="shrink-0">
               <Brand size={22} />
             </GuardedLink>

@@ -75,6 +75,7 @@ const workers: UserDto[] = [
     isActive: true,
     avatarFilename: null,
     companyId: "c-1",
+    companyName: "Acme Property Care",
     isPlatformAdmin: false,
     avgScore: null,
     ratingCount: 0,

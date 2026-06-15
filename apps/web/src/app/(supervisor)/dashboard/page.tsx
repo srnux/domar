@@ -13,11 +13,13 @@ import { RangeAgenda } from "@/components/agenda/RangeAgenda";
 import { MonthCalendar } from "@/components/agenda/MonthCalendar";
 import {
   formatDayHeading,
+  formatFullDate,
   groupByLocalDay,
   localDayKey,
   todayKey,
 } from "@/lib/dates";
-import { useJobs } from "@/lib/jobs";
+import { useMe } from "@/lib/auth";
+import { useJobs, useProperties } from "@/lib/jobs";
 import {
   buttonClass,
   EmptyState,
@@ -31,6 +33,8 @@ type AgendaRange = "today" | "week" | "month";
 export default function DashboardPage() {
   const t = useTranslations("supervisor");
   const { data: jobs, isPending } = useJobs();
+  const { data: me } = useMe();
+  const { data: properties } = useProperties();
   const [mode, setMode] = useState<AgendaRange>("today");
 
   const today = todayKey();
@@ -56,6 +60,12 @@ export default function DashboardPage() {
     <main className="mx-auto max-w-6xl p-4">
       <PageHeader
         title={t("weekAgenda")}
+        eyebrow={me?.companyName ?? undefined}
+        subtitle={t("dashboardMeta", {
+          date: formatFullDate(today),
+          properties: properties?.length ?? 0,
+          active: active.length,
+        })}
         action={
           <div className="flex items-center gap-2">
             <Segmented

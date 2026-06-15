@@ -22,11 +22,13 @@ import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import type { AuthenticatedRequest } from './jwt-auth.guard';
 
-type SafeUser = Omit<User, 'passwordHash'>;
+type SafeUser = Omit<User, 'passwordHash'> & { companyName: string | null };
 
-function toSafeUser(user: User): SafeUser {
-  const { passwordHash: _passwordHash, ...safe } = user;
-  return safe;
+function toSafeUser(
+  user: User & { company?: { name: string } | null },
+): SafeUser {
+  const { passwordHash: _passwordHash, company, ...safe } = user;
+  return { ...safe, companyName: company?.name ?? null };
 }
 
 function refreshCookieOf(req: Request): string | undefined {
@@ -50,6 +52,7 @@ export class AuthController {
     setAuthCookies(res, tokens);
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { email: dto.email },
+      include: { company: { select: { name: true } } },
     });
     return toSafeUser(user);
   }
@@ -88,6 +91,7 @@ export class AuthController {
   async me(@Req() req: AuthenticatedRequest): Promise<SafeUser> {
     const user = await this.prisma.user.findUnique({
       where: { id: req.user.sub },
+      include: { company: { select: { name: true } } },
     });
     if (!user || !user.isActive) {
       throw new UnauthorizedException();

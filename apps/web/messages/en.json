@@ -63,6 +63,7 @@
   "supervisor": {
     "dashboard": "Dashboard",
     "weekAgenda": "Agenda",
+    "dashboardMeta": "{date} · {properties, plural, one {# property} other {# properties}} · {active, plural, one {# active job} other {# active jobs}}",
     "today": "Today",
     "week": "Week",
     "month": "Month",

@@ -27,6 +27,14 @@ const headingFormat = new Intl.DateTimeFormat("en-GB", {
   month: "short",
 });
 
+const fullDateFormat = new Intl.DateTimeFormat("en-GB", {
+  timeZone: DISPLAY_TIMEZONE,
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+
 const monthLabelFormat = new Intl.DateTimeFormat("en-GB", {
   timeZone: DISPLAY_TIMEZONE,
   month: "long",
@@ -63,6 +71,11 @@ export function formatTime(iso: string): string {
 /** Readable heading for a "YYYY-MM-DD" day key, e.g. "Wed, 10 Jun". */
 export function formatDayHeading(dayKey: string): string {
   return headingFormat.format(new Date(`${dayKey}T12:00:00Z`));
+}
+
+/** Full readable date for a "YYYY-MM-DD" day key, e.g. "Wednesday, 10 June 2026". */
+export function formatFullDate(dayKey: string): string {
+  return fullDateFormat.format(new Date(`${dayKey}T12:00:00Z`));
 }
 
 export function todayKey(): string {

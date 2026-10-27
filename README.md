@@ -4,7 +4,8 @@ Property-care operations for holiday rentals — turnover cleanings, repairs,
 and servicing, with a mobile-first app for workers, a dashboard for
 supervisors, and a read-only portal for property owners.
 
-See [docs/design.md](docs/design.md) for the full design and milestone plan.
+See the [documentation](docs/README.md) for user guides, self-hosting and
+architecture.
 
 ## Stack
 
@@ -44,4 +45,11 @@ The api container runs `prisma migrate deploy` on every start.
 pnpm test                       # all workspaces
 pnpm --filter @domar/api test:e2e
 ```
+
+## License
+
+Domar is source-available under the
+[PolyForm Noncommercial License 1.0.0](LICENSE.md). You may use, modify and
+share it for any noncommercial purpose. Commercial use requires a separate
+license from the copyright holder.
 

@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "packageManager": "pnpm@11.1.2",
   "description": "Domar — property-care operations for holiday rentals",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "scripts": {
     "dev": "concurrently -n shared,api,web -c yellow,blue,green \"pnpm --filter @domar/shared dev\" \"pnpm --filter @domar/api start:dev\" \"pnpm --filter @domar/web dev\"",
     "build": "pnpm -r build",

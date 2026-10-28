@@ -15,13 +15,20 @@ architecture.
 
 ## Development
 
-Prereqs: Node ≥ 24, pnpm, Docker (works via WSL: `wsl docker ...`).
+Prereqs: Node ≥ 24, pnpm (`corepack enable`), Docker with Compose v2.
 
 ```sh
 pnpm install
-pnpm db:up        # postgres via docker-compose.dev.yml (WSL docker)
-pnpm dev          # api on :3001, web on :3002 (3000 is often taken by WSL dev servers) (proxies /api/* to the api)
+cp apps/api/.env.example apps/api/.env
+pnpm db:up        # postgres on :5432 via docker-compose.dev.yml
+pnpm db:migrate   # apply migrations + generate the Prisma client
+pnpm seed         # optional demo data
+pnpm dev          # api on :3001, web on http://localhost:3002 (proxies /api/* to the api)
 ```
+
+After pulling changes that touch the database schema, run `pnpm db:migrate`
+again. See [docs/development.md](docs/development.md) for a busy port 5432,
+your own Postgres, or Docker inside WSL.
 
 The web app talks to the API only through the Next.js rewrite proxy
 (same-origin), which the httpOnly cookie auth depends on — never call
@@ -43,7 +50,7 @@ The api container runs `prisma migrate deploy` on every start.
 
 ```sh
 pnpm test                       # all workspaces
-pnpm --filter @domar/api test:e2e
+pnpm --filter @domar/api test:e2e   # needs the dev database running
 ```
 
 ## License

@@ -10,8 +10,11 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
-    "db:up": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/db-up.ps1",
-    "db:down": "wsl -d Ubuntu docker compose -f docker-compose.dev.yml down",
+    "db:up": "docker compose -f docker-compose.dev.yml up -d --wait",
+    "db:down": "docker compose -f docker-compose.dev.yml down",
+    "db:migrate": "pnpm --filter @domar/api exec prisma migrate deploy && pnpm --filter @domar/api exec prisma generate",
+    "db:up:wsl": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/db-up.ps1",
+    "db:down:wsl": "wsl -d Ubuntu docker compose -f docker-compose.dev.yml down",
     "seed": "pnpm --filter @domar/api seed"
   },
   "devDependencies": {

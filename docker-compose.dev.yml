@@ -7,7 +7,9 @@ services:
       POSTGRES_PASSWORD: domar
       POSTGRES_DB: domar
     ports:
-      - "5432:5432"
+      # override when 5432 is taken, e.g. DOMAR_DB_PORT=5433 pnpm db:up
+      # (and use the same port in apps/api/.env DATABASE_URL)
+      - "${DOMAR_DB_PORT:-5432}:5432"
     volumes:
       - domar_pgdata_dev:/var/lib/postgresql/data
     healthcheck:

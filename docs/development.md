@@ -4,25 +4,57 @@
 
 - Node.js 24 or newer
 - pnpm (`corepack enable` sets up the version pinned in `package.json`)
-- Docker, for the development database
+- Docker with Compose v2, for the development database (or your own
+  PostgreSQL, see below)
+
+Works on macOS, Linux and Windows.
 
 ## First-time setup
 
 ```sh
 pnpm install
 cp apps/api/.env.example apps/api/.env
-docker compose -f docker-compose.dev.yml up -d   # PostgreSQL on :5432
-pnpm --filter @domar/api exec prisma migrate dev
-pnpm seed                                       # demo data
+pnpm db:up        # PostgreSQL on :5432, waits until it's healthy
+pnpm db:migrate   # apply migrations + generate the Prisma client
+pnpm seed         # demo data
 pnpm dev
 ```
 
 `pnpm dev` starts the shared package watcher, the API on `:3001` and the web
-app on **http://localhost:3002**.
+app on **http://localhost:3002**. On Windows, use PowerShell, or replace `cp`
+with `copy`.
 
-> `pnpm db:up` / `pnpm db:down` are shortcuts for Windows with Docker inside
-> WSL. On macOS, Linux or Docker Desktop, use the `docker compose` command
-> above.
+| Command | What it does |
+|---|---|
+| `pnpm db:up` / `pnpm db:down` | Start / stop the dev PostgreSQL container (data is kept in a volume) |
+| `pnpm db:migrate` | Apply pending migrations and regenerate the Prisma client. Run it after pulling schema changes. |
+| `pnpm seed` | Load the demo data (idempotent) |
+
+### Port 5432 already in use
+
+Start the database on another port, and use the same port in
+`apps/api/.env`:
+
+```sh
+DOMAR_DB_PORT=5433 pnpm db:up                  # macOS / Linux
+$env:DOMAR_DB_PORT=5433; pnpm db:up            # Windows PowerShell
+```
+
+```
+DATABASE_URL="postgresql://domar:domar@127.0.0.1:5433/domar?schema=public"
+```
+
+### Using your own PostgreSQL
+
+Skip `pnpm db:up` and point `DATABASE_URL` in `apps/api/.env` at your server.
+The user needs permission to create databases (the e2e tests create
+`domar_test`).
+
+### Docker inside WSL (without Docker Desktop)
+
+`pnpm db:up:wsl` / `pnpm db:down:wsl` run Compose in the `Ubuntu` WSL
+distribution and keep WSL running in the background, so the database doesn't
+stop when the terminal closes.
 
 ## Demo accounts
 
@@ -46,7 +78,9 @@ pnpm --filter @domar/api test:e2e  # API end-to-end tests against PostgreSQL
 pnpm lint
 ```
 
-The e2e suite needs the development database running.
+The e2e suite runs against a separate `domar_test` database on the same server
+as `DATABASE_URL` in `apps/api/.env`. It creates the database and applies
+migrations on its own. To use a different server, set `TEST_DATABASE_URL`.
 
 ## Conventions
 

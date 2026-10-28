@@ -1,6 +1,6 @@
 # @domar/worker-mobile
 
-The worker-facing mobile app (iOS + Android) built with **Vite + React + react-router**, wrapped by **Capacitor**. It reuses the web worker UI (`apps/web/src/components` + `apps/web/src/lib`, copied here) and talks to the same NestJS REST API.
+The worker-facing mobile app (Android; no iOS project is committed yet) built with **Vite + React + react-router**, wrapped by **Capacitor**. It reuses the web worker UI (`apps/web/src/components` + `apps/web/src/lib`, copied here) and talks to the same NestJS REST API.
 
 ## How the reuse works
 
@@ -29,7 +29,7 @@ Seed worker login: `marko@domar.test` / `Domar123!`.
 
 ## Run on the Android emulator (verified)
 
-Prerequisites (Linux): Android SDK (`platform-tools`, `emulator`, `platforms;android-35`, `system-images;android-35;google_apis;x86_64`), an AVD, KVM, and a **full JDK 21** (the system OpenJDK 21 here was a JRE without `javac`; a standalone Temurin JDK 21 lives at `~/jdks/jdk-21.0.11+10` and Gradle is pinned to it via `org.gradle.java.home` in `android/gradle.properties`).
+Prerequisites (Linux): Android SDK (`platform-tools`, `emulator`, `platforms;android-35`, `system-images;android-35;google_apis;x86_64`), an AVD, KVM, and a **full JDK 21** with `javac` (a JRE is not enough). Point `JAVA_HOME` at it, as below; the paths are examples.
 
 ```bash
 # build the web bundle with the emulator's API base (host = 10.0.2.2)
@@ -57,7 +57,9 @@ adb shell monkey -p io.github.srnux.domar.worker -c android.intent.category.LAUN
 - **`android/app/src/main/res/xml/network_security_config.xml`** + the `networkSecurityConfig` attribute in `AndroidManifest.xml` permit cleartext to `10.0.2.2` / `localhost` (dev only; prod is HTTPS).
 - `http://localhost` is already in the API CORS allow-list. For browser dev at `:5173`, start the API with `CORS_ORIGINS=http://localhost:5173`.
 
-> iOS needs macOS + Xcode — not runnable on this machine. `VITE_API_BASE`: iOS simulator `http://localhost:3001`, physical device your LAN IP / HTTPS staging URL.
+> **iOS** isn't set up yet: there's no `ios/` project and `@capacitor/ios` isn't a dependency. Adding it needs macOS + Xcode (`pnpm add @capacitor/ios`, `npx cap add ios`).
+
+For a production build, set `VITE_API_BASE` to your instance's public URL (e.g. `https://domar.example.com`); requests go through the web app's `/api` proxy, so no extra port or CORS setting is needed.
 
 ## What works today
 
@@ -67,14 +69,14 @@ adb shell monkey -p io.github.srnux.domar.worker -c android.intent.category.LAUN
 - **Offline** (`@capacitor/network` + React Query persistence in Preferences + a durable outbox):
   - Reads — My Day / My Week / job detail open from cached data with no connectivity.
   - Writes — accept/decline/start/finish, checklist toggles, comments, and photo uploads are optimistically applied and queued, then replayed FIFO on reconnect (verified: a job accepted offline synced to the server on reconnect).
-- **Push**: device registration (`POST /api/devices`), tap-to-deep-link, and server-side notify on new comments / job assignment — **gated off by default** (see below).
+- **Push**: device registration (`POST /api/devices`), tap-to-deep-link, and a server-side notification when someone else comments on the worker's job (the only event that notifies today). **Gated off by default** (see below).
 
 ## Enabling push
 
 Push needs a Firebase project (it crashes the native plugin otherwise), so it's opt-in:
 
 1. **Android**: add `google-services.json` to `android/app/`, apply the `com.google.gms.google-services` Gradle plugin.
-2. **iOS**: add `GoogleService-Info.plist` + an APNs auth key in the Firebase console.
+2. **iOS** (once an iOS project exists): add `GoogleService-Info.plist` + an APNs auth key in the Firebase console.
 3. **API**: set `FIREBASE_SERVICE_ACCOUNT` (the service-account JSON) so `NotificationsService` sends instead of logging.
 4. **Client**: set `VITE_PUSH_ENABLED=true` and rebuild.
 

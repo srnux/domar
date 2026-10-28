@@ -1,22 +1,24 @@
 # Domar documentation
 
-Domar helps a property-care team run holiday rentals: turnover cleanings
-between guests, repairs and servicing. Workers use it on their phones,
-supervisors plan and review the work, and property owners see what was done.
+Domar helps property-care companies run holiday rentals: turnover cleanings
+between guests, repairs, gardening and inspections. Workers use it on their
+phones, supervisors plan, review and bill the work, and property owners
+follow what was done on their properties.
 
 ## Using Domar
 
-- [Getting started](user-guide/getting-started.md): accepting an invite, signing in, roles
-- [Guide for supervisors](user-guide/supervisors.md): planning, assigning and verifying work
-- [Guide for workers](user-guide/workers.md): your day, checklists, photos, finishing a job
-- [Guide for property owners](user-guide/owners.md): following the work on your properties
+- [Getting started](user-guide/getting-started.md): invites, signing in, roles
+- [Guide for supervisors](user-guide/supervisors.md): planning, pricing, bids, verification, bills
+- [Guide for workers](user-guide/workers.md): your day, bids, checklists, photos, the Android app
+- [Guide for property owners](user-guide/owners.md): work history, ratings, bills
 - [How a job moves through Domar](user-guide/job-lifecycle.md): statuses and who can change them
 
 ## Running Domar
 
-- [Self-hosting](self-hosting.md): install, configure, back up and upgrade with Docker Compose
+- [Self-hosting](self-hosting.md): install, create the first admin and companies, configure, back up, upgrade
 
 ## Working on Domar
 
-- [Development](development.md): local setup, tests and conventions
+- [Development](development.md): local setup, demo accounts, tests, the mobile app
 - [Architecture](architecture.md): how the pieces fit together
+- [Contributing](../CONTRIBUTING.md)

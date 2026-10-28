@@ -1,0 +1,58 @@
+name: Bug report
+description: Something doesn't work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! **Security problems** go through
+        [private reporting](https://github.com/srnux/domar/security/advisories/new), not here.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you see, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Sign in as a supervisor (e.g. ana@domar.test)
+        2. Open …
+        3. Select …
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where?
+      multiple: true
+      options:
+        - Web app — supervisor
+        - Web app — worker
+        - Web app — owner
+        - Web app — platform admin
+        - Worker Android app
+        - API
+        - Self-hosting / Docker
+        - Development setup
+        - Documentation
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Commit hash or date of the `main` you're running.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser / device, OS, Node.js and Docker versions, as relevant.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Remove passwords, tokens, access codes and personal data first.

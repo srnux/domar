@@ -1,0 +1,32 @@
+name: Feature request
+description: Suggest an idea or improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation, e.g. "As a supervisor, when a guest checks out early, I…"
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to happen?
+    validations:
+      required: true
+  - type: dropdown
+    id: role
+    attributes:
+      label: Who is it for?
+      multiple: true
+      options:
+        - Supervisors
+        - Workers
+        - Property owners
+        - Platform admins / self-hosters
+        - Developers
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives or workarounds you've considered

@@ -1,31 +1,22 @@
 import { execSync } from 'node:child_process';
-import { TEST_DATABASE_URL } from './test-db';
+import { ADMIN_DATABASE_URL, TEST_DATABASE_URL } from './test-db';
 
 export default function globalSetup() {
   // Ensure the dedicated test database exists (no-op if it already does).
   // Suites clean the tables they touch, so no force-reset is needed.
-  // Try native docker first (Linux / Docker Desktop), then the WSL-Ubuntu form.
-  const candidates = [
-    'docker exec domar-postgres-dev createdb -U domar domar_test',
-    'wsl -d Ubuntu docker exec domar-postgres-dev createdb -U domar domar_test',
-  ];
-  let created = false;
-  let lastErr: unknown;
-  for (const cmd of candidates) {
-    try {
-      execSync(cmd, { stdio: 'pipe' });
-      created = true;
-      break;
-    } catch (e: unknown) {
-      const msg = String((e as { stderr?: Buffer }).stderr ?? e);
-      if (msg.includes('already exists')) {
-        created = true;
-        break;
-      }
-      lastErr = e;
-    }
+  // Goes through Prisma, not docker exec, so any reachable Postgres works.
+  const database = new URL(TEST_DATABASE_URL).pathname.slice(1);
+  try {
+    execSync(`npx prisma db execute --stdin --url "${ADMIN_DATABASE_URL}"`, {
+      cwd: `${__dirname}/..`,
+      input: `CREATE DATABASE "${database}";`,
+      stdio: 'pipe',
+    });
+  } catch (e: unknown) {
+    const err = e as { stdout?: Buffer; stderr?: Buffer };
+    const output = String(err.stdout ?? '') + String(err.stderr ?? '');
+    if (!output.includes('already exists')) throw e;
   }
-  if (!created) throw lastErr;
 
   execSync('npx prisma migrate deploy', {
     cwd: `${__dirname}/..`,

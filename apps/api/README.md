@@ -1,98 +1,55 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# @domar/api
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Domar's REST API: NestJS 11, Prisma 6 and PostgreSQL. Every route is served
+under `/api`.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+For setup, run the commands in the [root README](../../README.md#try-it-locally);
+[docs/development.md](../../docs/development.md) has the details. How the
+pieces fit together is in [docs/architecture.md](../../docs/architecture.md).
 
-## Description
+## Commands
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Run from the repository root with `pnpm --filter @domar/api <script>`, or from
+this folder with `pnpm <script>`:
 
-## Project setup
+| Script | What it does |
+|---|---|
+| `start:dev` | Start with watch mode on `:3001` |
+| `build` / `start:prod` | Compile to `dist/` / run the compiled app |
+| `test` | Unit tests (`src/**/*.spec.ts`) |
+| `test:e2e` | End-to-end tests (`test/*.e2e-spec.ts`) against a `domar_test` database |
+| `lint` | ESLint, **with `--fix`** |
+| `seed` | Load demo data (`prisma/seed.ts`); never in production |
 
-```bash
-$ pnpm install
+## Layout
+
+```
+prisma/          schema.prisma, migrations/, seed.ts
+src/
+  auth/          login, refresh, JWT guard, roles guard
+  admin/         platform-admin endpoints (/api/admin/companies)
+  prisma/        Prisma service + tenant-scoping extension
+  license/       seat limits per company
+  jobs/          job CRUD and job-status.machine.ts (the lifecycle rules)
+  bids/  ratings/  checklists/  photos/  comments/  activity/
+  bookings/      bookings + turnover-suggestion.ts
+  bills/         billing + PDF rendering
+  properties/  users/  invites/  devices/  notifications/  health/
+test/            e2e suites + test database setup
 ```
 
-## Compile and run the project
+## Environment
 
-```bash
-# development
-$ pnpm run start
+Read from `.env` in this folder (copy [.env.example](.env.example)):
 
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
-```
-
-## Run tests
-
-```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+| Variable | Default | |
+|---|---|---|
+| `DATABASE_URL` | none | Required |
+| `JWT_SECRET` | none | Required; the API won't start without it |
+| `PORT` | `3001` | |
+| `UPLOADS_DIR` | `./uploads` | Photos and avatars |
+| `WEB_URL` | `http://localhost:3002` | Base of invite links |
+| `COOKIE_SECURE` | `true` | Only applies when `NODE_ENV=production` |
+| `CORS_ORIGINS` | empty | Extra cross-origin callers, comma-separated |
+| `FIREBASE_SERVICE_ACCOUNT` | empty | Service-account JSON; enables push |
+| `TEST_DATABASE_URL` | derived | e2e tests only |

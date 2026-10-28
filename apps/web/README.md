@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# @domar/web
 
-## Getting Started
+Domar's web app for every role: Next.js 16 (App Router), Tailwind CSS 4,
+TanStack Query and next-intl. Pages are client components that fetch through
+TanStack Query hooks.
 
-First, run the development server:
+For setup, run the commands in the [root README](../../README.md#try-it-locally);
+[docs/development.md](../../docs/development.md) has the details. `pnpm dev`
+in the repository root serves this app on **http://localhost:3002**.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Talking to the API
+
+The browser only calls relative `/api/...` paths. `next.config.ts` rewrites
+them to `API_URL` (default `http://localhost:3001`). That same-origin setup is
+what lets the httpOnly auth cookies and `<img src="/api/photos/:id">` work, so
+never call the API by its own address from browser code. `API_URL` is read at
+build time, so the Docker image is built with it as a build arg.
+
+## Layout
+
+```
+src/app/
+  (auth)/        login, invite/[token]
+  (supervisor)/  dashboard, jobs, verify, bookings, manage/properties, manage/bills, users
+  (worker)/      my-day, my-week, my-jobs/[id], bids
+  (owner)/       properties, bills
+  (admin)/admin  platform admin
+  profile/
+src/components/  shared components (ui/ = primitives, agenda/ = dashboard timeline)
+src/lib/         API client, TanStack Query hooks, date and money helpers
+messages/en.json all UI text
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Each route group's layout gates access by role on the client; the API enforces
+the actual permissions.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Commands
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Script | What it does |
+|---|---|
+| `dev` | Dev server on `:3002` |
+| `build` / `start` | Production build (standalone output) / serve it |
+| `test` | Vitest unit tests |
+| `lint` | ESLint |
 
-## Learn More
+## Conventions
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- All UI text goes through next-intl keys in `messages/en.json`.
+- Design tokens live in `src/app/globals.css` (`@theme`); there's no `tailwind.config`.
+- Worker screens are also used by `apps/worker-mobile`, which keeps copies of
+  the worker components and `lib/`. Mirror relevant changes there.
+- Read [AGENTS.md](AGENTS.md) before relying on Next.js knowledge from older versions.
